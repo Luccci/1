@@ -22,11 +22,13 @@ static int window_width,window_height;
 static void on_display();
 static void on_reshape(int width,int height);
 void iscrtaj_kocku(int x,int y,int z,char c);
-void oblik_T(int x,int y,int z,char c);
-void oblik_O(int x,int y,int z,char c);
-void oblik_I(int x,int y,int z,char c);
-void oblik_J(int x,int y,int z,char c);
-void oblik_Z(int x,int y,int z,char c);
+void oblik_T(int x,int y,int z);
+void oblik_O(int x,int y,int z);
+void oblik_I(int x,int y,int z);
+void oblik_L(int x,int y,int z);
+void oblik_Z(int x,int y,int z);
+void oblik_Y(int x,int y,int z);
+void oblik_X(int x,int y,int z);
 void inicijalizuj_matricu();
 void postolje();
 
@@ -74,13 +76,19 @@ static void on_display(void)
 		);
 	//test iscrtavanja oblika (funkcije uzimaju za argumente pozicije na kojima se iscrtava oblik)
 	//one u sebi pozivaju po cetiri funkcije "iscrtaj kocku" i tako nastaje oblik
-	oblik_T(2,0,6,'m');
-	oblik_O(7,0,3,'r');
-	oblik_I(12,0,4,'p');
-	oblik_J(2,0,0,'b');
-	oblik_Z(12,0,1,'g');
-	postolje();
-	
+	postolje();	
+	oblik_T(2,0,6);
+	oblik_O(7,0,3);
+	oblik_I(12,0,4);
+	oblik_L(2,0,0);	
+	oblik_Z(12,0,1);	
+	oblik_Y(10,0,10);
+	oblik_X(6,0,10);
+	/*
+	glRotatef(90,1,1,1);
+	glTranslatef(-5,-5,-5);	
+	oblik_X(5,5,5);
+	*/	
 	glutSwapBuffers();
 	}
 
@@ -92,7 +100,6 @@ static void on_reshape(int width,int height)
 
 void iscrtaj_kocku(int x,int y,int z,char c)
 {
-
 	if(c=='r')
 		glColor3f(0.5,0,0);
 	else if(c=='p')
@@ -103,6 +110,10 @@ void iscrtaj_kocku(int x,int y,int z,char c)
 		glColor3f(0,0.2,0);
 	else if(c=='m')
 		glColor3f(0.3, 0.2, 0.2);
+	else if(c=='z')
+		glColor3f(1,1,0);
+	else if(c=='o')
+		glColor3f(1,0.5,0);
 	else
 		glColor3f(0,0,0);
 	
@@ -195,44 +206,60 @@ void iscrtaj_kocku(int x,int y,int z,char c)
 	glEnd();
 }
 
-void oblik_T(int x,int y,int z,char c)
+void oblik_T(int x,int y,int z)
 {
-	iscrtaj_kocku(x+1,y,z,c);
-	iscrtaj_kocku(x,y,z,c);
-	iscrtaj_kocku(x-1,y,z,c);
-	iscrtaj_kocku(x,y+1,z,c);
+	iscrtaj_kocku(x+1,y,z,'m');
+	iscrtaj_kocku(x,y,z,'m');
+	iscrtaj_kocku(x-1,y,z,'m');
+	iscrtaj_kocku(x,y+1,z,'m');
 }
 
-void oblik_O(int x,int y,int z,char c)
+void oblik_O(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,c);
-	iscrtaj_kocku(x+1,y,z,c);
-	iscrtaj_kocku(x,y+1,z,c);
-	iscrtaj_kocku(x+1,y+1,z,c);
+	iscrtaj_kocku(x,y,z,'r');
+	iscrtaj_kocku(x+1,y,z,'r');
+	iscrtaj_kocku(x,y+1,z,'r');
+	iscrtaj_kocku(x+1,y+1,z,'r');
 }
 
-void oblik_I(int x,int y,int z,char c)
+void oblik_I(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,c);
-	iscrtaj_kocku(x,y+1,z,c);
-	iscrtaj_kocku(x,y+2,z,c);
-	iscrtaj_kocku(x,y+3,z,c);
+	iscrtaj_kocku(x,y,z,'p');
+	iscrtaj_kocku(x,y+1,z,'p');
+	iscrtaj_kocku(x,y+2,z,'p');
+	iscrtaj_kocku(x,y+3,z,'p');
 }
 
-void oblik_J(int x,int y,int z,char c)
+void oblik_L(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,c);
-	iscrtaj_kocku(x,y+1,z,c);
-	iscrtaj_kocku(x,y+2,z,c);
-	iscrtaj_kocku(x+1,y+2,z,c);
+	iscrtaj_kocku(x,y,z,'b');
+	iscrtaj_kocku(x,y+1,z,'b');
+	iscrtaj_kocku(x,y+2,z,'b');
+	iscrtaj_kocku(x+1,y+2,z,'b');
 }
 
-void oblik_Z(int x,int y,int z,char c)
+void oblik_Z(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,c);
-	iscrtaj_kocku(x,y+1,z,c);
-	iscrtaj_kocku(x+1,y+1,z,c);
-	iscrtaj_kocku(x-1,y,z,c);
+	iscrtaj_kocku(x,y,z,'g');
+	iscrtaj_kocku(x,y+1,z,'g');
+	iscrtaj_kocku(x+1,y+1,z,'g');
+	iscrtaj_kocku(x-1,y,z,'g');
+}
+
+void oblik_Y(int x,int y,int z)
+{
+	iscrtaj_kocku(x,y,z,'z');
+	iscrtaj_kocku(x-1,y,z,'z');
+	iscrtaj_kocku(x,y+1,z,'z');
+	iscrtaj_kocku(x,y,z-1,'z');
+}
+
+void oblik_X(int x,int y,int z)
+{
+	iscrtaj_kocku(x,y,z,'o');
+	iscrtaj_kocku(x-1,y,z,'o');
+	iscrtaj_kocku(x,y+1,z,'o');
+	iscrtaj_kocku(x,y+1,z-1,'o');
 }
 
 void inicijalizuj_matricu(void)
@@ -261,18 +288,139 @@ void postolje()
 		for(j=0;j<20;j++)
 			{
 			glBegin(GL_POLYGON);
-			glVertex3f(i-0.5,-1,j-0.5);
-			glVertex3f(i-0.5,-1,j+0.5);
-			glVertex3f(i+0.5,-1,j+0.5);
-			glVertex3f(i+0.5,-1,j-0.5);
+			glVertex3f(i-0.5,-0.5,j-0.5);
+			glVertex3f(i-0.5,-0.5,j+0.5);
+			glVertex3f(i+0.5,-0.5,j+0.5);
+			glVertex3f(i+0.5,-0.5,j-0.5);
 			glEnd();
 
 			glBegin(GL_LINES);
-			glVertex3f(i-0.5,-1,j-0.5);
-			glVertex3f(i-0.5,-1,j+0.5);
-			glVertex3f(i+0.5,-1,j+0.5);
-			glVertex3f(i+0.5,-1,j-0.5);
+			glVertex3f(i-0.5,-0.5,j-0.5);
+			glVertex3f(i-0.5,-0.5,j+0.5);
+			glVertex3f(i+0.5,-0.5,j+0.5);
+			glVertex3f(i+0.5,-0.5,j-0.5);
 			glEnd();
 			}
 		}
 }
+
+/*
+void oblik_T(int x,int y,int z)
+{
+	glColor3f(0.3, 0.2, 0.2);
+	glTranslatef(x+1,y+0,z+0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(-1,0,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(-1,0,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(1,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+}
+
+void oblik_O(int x,int y,int z)
+{
+	glColor3f(0.5,0,0);
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(1,0,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(-1,0,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+}
+
+void oblik_I(int x,int y,int z)
+{
+	glColor3f(0.6, 0.5, 0.75);
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+}
+
+void oblik_J(int x,int y,int z)
+{
+	glColor3f(0,0,0.5);
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(1,0,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+}
+
+void oblik_Z(int x,int y,int z)
+{
+	glColor3f(0,0.2,0);
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(1,0,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(-2,-1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+}
+
+void oblik_Y(int x,int y,int z)
+{
+	glColor3f(1,1,0);
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(-1,0,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(1,0,-1);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,1,1);
+	glutSolidCube(1);
+	glutWireCube(1);
+}
+
+void oblik_X(int x,int y,int z)
+{
+	glColor3f(1,0.5,0);
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(-1,0,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(1,1,0);
+	glutSolidCube(1);
+	glutWireCube(1);
+	glTranslatef(0,0,-1);
+	glutSolidCube(1);
+	glutWireCube(1);
+}
+*/

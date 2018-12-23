@@ -3,6 +3,8 @@
 #define SIRINA 20
 #define VISINA 20
 #define DUZINA 20
+#define TIMER_INTERVAL 1000
+#define TIMER_ID 0
 
 //matrica 20*20*20 opisuje trodimenzionalni prostor podeljen na kocke 
 //koje popunjavamo padajucim predmetima koji su takodje sastavljeni od kocki ...
@@ -16,12 +18,56 @@ bool pokretan;
 }polje;
 
 polje prostorIgranja[SIRINA][VISINA][DUZINA];
-
 static int window_width,window_height;
+int animation_on=0;
+int Px=9;
+int Py=15;
+int Pz=9;
 
+GLfloat light_position[]={1,1,1,0};
+GLfloat light_diffuse[]={0.7, 0.7, 0.7, 1};
+GLfloat light_ambient[]={0.5, 0.5, 0.5, 1};
+GLfloat light_specular[]={0.9, 0.9, 0.9, 1};
+
+GLfloat shininess=30;
+	
+GLfloat Tmaterial_diffuse[]={0.3, 0.2, 0.2, 1};
+GLfloat Tmaterial_ambient[]={0.3, 0.2, 0.2, 1};
+GLfloat Tmaterial_specular[]={0.9, 0.9, 0.9, 1};
+	
+GLfloat Omaterial_diffuse[]={0.5,0,0,1};
+GLfloat Omaterial_ambient[]={0.5, 0, 0, 1};
+GLfloat Omaterial_specular[]={0.9, 0.9, 0.9, 1};
+	
+GLfloat Imaterial_diffuse[]={0.6, 0.5, 0.75, 1};
+GLfloat Imaterial_ambient[]={0.6, 0.5, 0.75, 1};
+GLfloat Imaterial_specular[]={0.9, 0.9, 0.9, 1};
+
+GLfloat Lmaterial_diffuse[]={0, 0, 0.5, 1};
+GLfloat Lmaterial_ambient[]={0, 0, 0.5, 1};
+GLfloat Lmaterial_specular[]={0.9, 0.9, 0.9, 1};
+
+GLfloat Zmaterial_diffuse[]={0, 0.2, 0, 1};
+GLfloat Zmaterial_ambient[]={0, 0.2, 0, 1};
+GLfloat Zmaterial_specular[]={0.9, 0.9, 0.9, 1};
+
+GLfloat Ymaterial_diffuse[]={1, 1, 0, 1};
+GLfloat Ymaterial_ambient[]={1, 1, 0, 1};
+GLfloat Ymaterial_specular[]={0.9, 0.9, 0.9, 1};
+
+GLfloat Xmaterial_diffuse[]={1, 0.5, 0, 1};
+GLfloat Xmaterial_ambient[]={1, 0.5, 0, 1};
+GLfloat Xmaterial_specular[]={0.9, 0.9, 0.9, 1};
+
+GLfloat Bmaterial_diffuse[]={0,0,0,1};
+GLfloat Bmaterial_ambient[]={0,0,0,1};
+GLfloat Bmaterial_specular[]={0,0,0,1};
+
+static void on_keyboard(unsigned char key,int x,int y);
 static void on_display();
 static void on_reshape(int width,int height);
-void iscrtaj_kocku(int x,int y,int z,char c);
+static void on_timer(int value);
+
 void oblik_T(int x,int y,int z);
 void oblik_O(int x,int y,int z);
 void oblik_I(int x,int y,int z);
@@ -31,6 +77,15 @@ void oblik_Y(int x,int y,int z);
 void oblik_X(int x,int y,int z);
 void inicijalizuj_matricu();
 void postolje();
+
+void oblik_TR(int x,int y,int z);
+void oblik_OR(int x,int y,int z);
+void oblik_IR(int x,int y,int z);
+void oblik_LR(int x,int y,int z);
+void oblik_ZR(int x,int y,int z);
+void oblik_YR(int x,int y,int z);
+void oblik_XR(int x,int y,int z);
+void iscrtaj_kocku(int x,int y,int z,char c);
 
 int main(int argc, char **argv)
 {
@@ -43,10 +98,11 @@ glutCreateWindow(argv[0]);
 
 inicijalizuj_matricu();
 
-glutDisplayFunc(on_display);
+glutKeyboardFunc(on_keyboard);
 glutReshapeFunc(on_reshape);
+glutDisplayFunc(on_display);
 
-glClearColor(0,0,0,0);
+/*glClearColor(0,0,0,0);*/
 glEnable(GL_DEPTH_TEST);
 
 glutMainLoop();
@@ -65,30 +121,37 @@ static void on_display(void)
 	    gluPerspective(
 		    60,
 		    window_width/(float)window_height,
-		    1,50 );
+		    1,100 );
 
 	    glMatrixMode(GL_MODELVIEW);
 	    glLoadIdentity();
 	    gluLookAt(
-		    -1*6, 2*6,-3*6,
+		    -1*10, 2*10,-3*10,
 		    0, 0, 0,
 		    0, 1, 0
 		);
-	//test iscrtavanja oblika (funkcije uzimaju za argumente pozicije na kojima se iscrtava oblik)
-	//one u sebi pozivaju po cetiri funkcije "iscrtaj kocku" i tako nastaje oblik
-	postolje();	
-	oblik_T(2,0,6);
+
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_NORMALIZE);
+	    
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	
+	glLightfv(GL_LIGHT0,GL_POSITION,light_position);
+	glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
+	glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
+	glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
+
+	postolje();
+	oblik_TR(Px,Py,Pz);
+	oblik_T(3,0,1);
 	oblik_O(7,0,3);
-	oblik_I(12,0,4);
-	oblik_L(2,0,0);	
+	oblik_I(12,1,4);
+	oblik_L(0,1,4);	
 	oblik_Z(12,0,1);	
-	oblik_Y(10,0,10);
+	oblik_Y(13,0,13);
 	oblik_X(6,0,10);
-	/*
-	glRotatef(90,1,1,1);
-	glTranslatef(-5,-5,-5);	
-	oblik_X(5,5,5);
-	*/	
+
 	glutSwapBuffers();
 	}
 
@@ -97,169 +160,295 @@ static void on_reshape(int width,int height)
 	window_width=width;
 	window_height=height;
 	}
-
-void iscrtaj_kocku(int x,int y,int z,char c)
+	
+static void on_keyboard(unsigned char key,int x,int y)
 {
-	if(c=='r')
-		glColor3f(0.5,0,0);
-	else if(c=='p')
-		glColor3f(0.6, 0.5, 0.75);
-	else if(c=='b')
-		glColor3f(0,0,0.5);
-	else if(c=='g')
-		glColor3f(0,0.2,0);
-	else if(c=='m')
-		glColor3f(0.3, 0.2, 0.2);
-	else if(c=='z')
-		glColor3f(1,1,0);
-	else if(c=='o')
-		glColor3f(1,0.5,0);
-	else
-		glColor3f(0,0,0);
-	
-	glBegin(GL_POLYGON);
-	glVertex3f(x-0.5,y+0.5,z-0.5);
-	glVertex3f(x-0.5,y-0.5,z-0.5);	
-	glVertex3f(x+0.5,y-0.5,z-0.5);
-	glVertex3f(x+0.5,y+0.5,z-0.5);
-	glEnd();
-	
-	glBegin(GL_POLYGON);
-	glVertex3f(x-0.5,y+0.5,z+0.5);
-	glVertex3f(x-0.5,y-0.5,z+0.5);	
-	glVertex3f(x+0.5,y-0.5,z+0.5);
-	glVertex3f(x+0.5,y+0.5,z+0.5);
-	glEnd();
-	
-	glBegin(GL_POLYGON);
-	glVertex3f(x-0.5,y+0.5,z-0.5);
-	glVertex3f(x-0.5,y+0.5,z+0.5);	
-	glVertex3f(x+0.5,y+0.5,z+0.5);
-	glVertex3f(x+0.5,y+0.5,z-0.5);
-	glEnd();
-	
-	glBegin(GL_POLYGON);
-	glVertex3f(x-0.5,y-0.5,z-0.5);
-	glVertex3f(x-0.5,y-0.5,z+0.5);	
-	glVertex3f(x+0.5,y-0.5,z+0.5);
-	glVertex3f(x+0.5,y-0.5,z-0.5);
-	glEnd();
-	
-	glBegin(GL_POLYGON);
-	glVertex3f(x+0.5,y+0.5,z+0.5);
-	glVertex3f(x+0.5,y+0.5,z-0.5);	
-	glVertex3f(x+0.5,y-0.5,z-0.5);
-	glVertex3f(x+0.5,y-0.5,z+0.5);
-	glEnd();
-	
-	glBegin(GL_POLYGON);
-	glVertex3f(x-0.5,y+0.5,z+0.5);
-	glVertex3f(x-0.5,y+0.5,z-0.5);	
-	glVertex3f(x-0.5,y-0.5,z-0.5);
-	glVertex3f(x-0.5,y-0.5,z+0.5);
-	glEnd();
-        
-	//a sad ivice
-
-	glColor3f(0,0,0);
-	
-	glBegin(GL_LINES);
-	glVertex3f(x-0.5,y+0.5,z-0.5);
-	glVertex3f(x-0.5,y-0.5,z-0.5);	
-	glVertex3f(x+0.5,y-0.5,z-0.5);
-	glVertex3f(x+0.5,y+0.5,z-0.5);
-	glEnd();
-	
-	glBegin(GL_LINES);
-	glVertex3f(x-0.5,y+0.5,z+0.5);
-	glVertex3f(x-0.5,y-0.5,z+0.5);	
-	glVertex3f(x+0.5,y-0.5,z+0.5);
-	glVertex3f(x+0.5,y+0.5,z+0.5);
-	glEnd();
-	
-	glBegin(GL_LINES);
-	glVertex3f(x-0.5,y+0.5,z-0.5);
-	glVertex3f(x-0.5,y+0.5,z+0.5);	
-	glVertex3f(x+0.5,y+0.5,z+0.5);
-	glVertex3f(x+0.5,y+0.5,z-0.5);
-	glEnd();
-	
-	glBegin(GL_LINES);
-	glVertex3f(x-0.5,y-0.5,z-0.5);
-	glVertex3f(x-0.5,y-0.5,z+0.5);	
-	glVertex3f(x+0.5,y-0.5,z+0.5);
-	glVertex3f(x+0.5,y-0.5,z-0.5);
-	glEnd();
-	
-	glBegin(GL_LINES);
-	glVertex3f(x+0.5,y+0.5,z+0.5);
-	glVertex3f(x+0.5,y+0.5,z-0.5);	
-	glVertex3f(x+0.5,y-0.5,z-0.5);
-	glVertex3f(x+0.5,y-0.5,z+0.5);
-	glEnd();
-	
-	glBegin(GL_LINES);
-	glVertex3f(x-0.5,y+0.5,z+0.5);
-	glVertex3f(x-0.5,y+0.5,z-0.5);	
-	glVertex3f(x-0.5,y-0.5,z-0.5);
-	glVertex3f(x-0.5,y-0.5,z+0.5);
-	glEnd();
+	switch(key)
+	{
+		case 'g':
+		case 'G':
+			if(!animation_on){
+				glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
+				animation_on=1;}
+			break;
+		case 's':
+		case 'S':	
+			animation_on=0;
+			break;
+	    	case 27:
+		exit(EXIT_SUCCESS);
+		break;
+	}
 }
 
-void oblik_T(int x,int y,int z)
+static void on_timer(int value)
 {
-	iscrtaj_kocku(x+1,y,z,'m');
-	iscrtaj_kocku(x,y,z,'m');
-	iscrtaj_kocku(x-1,y,z,'m');
-	iscrtaj_kocku(x,y+1,z,'m');
+	if(value!=TIMER_ID)
+		return ;	
+	Py--;
+	glutPostRedisplay();
+	if(animation_on && Py>0){
+	glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
+	}
+}
+
+//detalj... postolje...
+void postolje()
+{
+	int i,j;
+	GLfloat postoljeDiffuse[]={0.3,0.3,0.3,1};
+	GLfloat postoljeAmbient[]={0.1,0.1,0.1,1};
+	GLfloat postoljeSpecular[]={0.9,0.9,0.9,1};
+	
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,postoljeDiffuse);
+	glMaterialfv(GL_FRONT,GL_AMBIENT,postoljeAmbient);
+	glMaterialfv(GL_FRONT,GL_SPECULAR,postoljeSpecular);
+	glMaterialf(GL_FRONT,GL_SHININESS,shininess);
+	
+	for(i=0;i<20;i++)
+		{
+		for(j=0;j<20;j++)
+			{
+			glBegin(GL_POLYGON);
+			glNormal3f(0,1,0);
+			glVertex3f(i-0.5,-0.5,j-0.5);
+			glVertex3f(i-0.5,-0.5,j+0.5);
+			glVertex3f(i+0.5,-0.5,j+0.5);
+			glVertex3f(i+0.5,-0.5,j-0.5);
+			glEnd();
+
+			glColor3f(0,0,0);
+			glBegin(GL_LINES);
+			glVertex3f(i-0.5,-0.5,j-0.5);
+			glVertex3f(i-0.5,-0.5,j+0.5);
+			glVertex3f(i+0.5,-0.5,j+0.5);
+			glVertex3f(i+0.5,-0.5,j-0.5);
+			glEnd();
+			}
+		}
+}
+
+/* 	//deo koda za oivicenje kocaka
+	
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Bmaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Bmaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Bmaterial_specular);
+	
+	glPushMatrix();
+	glTranslatef(x,y,z);
+	glutWireCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x+1,y,z);	
+	glutWireCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x-1,y,z);	
+	glutWireCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z);	
+	glutWireCube(1);	
+	glPopMatrix();
+*/
+
+void oblik_T(int x,int y,int z)
+{	
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Tmaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Tmaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Tmaterial_specular);
+	glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
+	
+	glPushMatrix();
+	glTranslatef(x,y,z);
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x+1,y,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x-1,y,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
 }
 
 void oblik_O(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,'r');
-	iscrtaj_kocku(x+1,y,z,'r');
-	iscrtaj_kocku(x,y+1,z,'r');
-	iscrtaj_kocku(x+1,y+1,z,'r');
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Omaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Omaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Omaterial_specular);
+	glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
+	
+	glPushMatrix();
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x+1,y,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x+1,y+1,z);
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z);
+	glutSolidCube(1);
+	glPopMatrix();
 }
 
 void oblik_I(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,'p');
-	iscrtaj_kocku(x,y+1,z,'p');
-	iscrtaj_kocku(x,y+2,z,'p');
-	iscrtaj_kocku(x,y+3,z,'p');
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Imaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Imaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Imaterial_specular);
+	glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
+	
+	glPushMatrix();
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y-1,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+2,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
 }
 
 void oblik_L(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,'b');
-	iscrtaj_kocku(x,y+1,z,'b');
-	iscrtaj_kocku(x,y+2,z,'b');
-	iscrtaj_kocku(x+1,y+2,z,'b');
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Lmaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Lmaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Lmaterial_specular);
+	glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
+
+	glPushMatrix();
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y-1,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z);	
+	glutSolidCube(1);
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x+1,y+1,z);
+	glutSolidCube(1);
+	glPopMatrix();
 }
 
 void oblik_Z(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,'g');
-	iscrtaj_kocku(x,y+1,z,'g');
-	iscrtaj_kocku(x+1,y+1,z,'g');
-	iscrtaj_kocku(x-1,y,z,'g');
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Zmaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Zmaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Zmaterial_specular);
+	glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
+
+	glPushMatrix();
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x+1,y+1,z);
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x-1,y,z);
+	glutSolidCube(1);	
+	glPopMatrix();	
 }
 
 void oblik_Y(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,'z');
-	iscrtaj_kocku(x-1,y,z,'z');
-	iscrtaj_kocku(x,y+1,z,'z');
-	iscrtaj_kocku(x,y,z-1,'z');
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Ymaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Ymaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Ymaterial_specular);
+	glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
+
+	glPushMatrix();
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x-1,y,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y,z-1);
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z);
+	glutSolidCube(1);	
+	glPopMatrix();
 }
 
 void oblik_X(int x,int y,int z)
 {
-	iscrtaj_kocku(x,y,z,'o');
-	iscrtaj_kocku(x-1,y,z,'o');
-	iscrtaj_kocku(x,y+1,z,'o');
-	iscrtaj_kocku(x,y+1,z-1,'o');
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Xmaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Xmaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Xmaterial_specular);
+	glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
+
+	glPushMatrix();
+	glTranslatef(x,y,z);
+	glutSolidCube(1);
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x-1,y,z);	
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z);
+	glutSolidCube(1);	
+	glPopMatrix();
+	
+	glPushMatrix();
+	glTranslatef(x,y+1,z-1);
+	glutSolidCube(1);	
+	glPopMatrix();
 }
 
 void inicijalizuj_matricu(void)
@@ -278,149 +467,198 @@ void inicijalizuj_matricu(void)
 	}
 }
 
-//detalj... postolje...
-void postolje()
-{
-	int i,j;
-	glColor3f(0.3,0.3,0.3);
-	for(i=0;i<20;i++)
-		{
-		for(j=0;j<20;j++)
-			{
-			glBegin(GL_POLYGON);
-			glVertex3f(i-0.5,-0.5,j-0.5);
-			glVertex3f(i-0.5,-0.5,j+0.5);
-			glVertex3f(i+0.5,-0.5,j+0.5);
-			glVertex3f(i+0.5,-0.5,j-0.5);
-			glEnd();
 
-			glBegin(GL_LINES);
-			glVertex3f(i-0.5,-0.5,j-0.5);
-			glVertex3f(i-0.5,-0.5,j+0.5);
-			glVertex3f(i+0.5,-0.5,j+0.5);
-			glVertex3f(i+0.5,-0.5,j-0.5);
-			glEnd();
-			}
+    //funkcije uzimaju za argumente pozicije na kojima se iscrtava oblik
+    //one u sebi pozivaju po cetiri funkcije "iscrtaj kocku" i tako nastaje oblik    
+void iscrtaj_kocku(int x,int y,int z,char c)
+{
+	if(c=='o'){
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Omaterial_diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Omaterial_ambient);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Omaterial_specular);
+		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);}
+	else if(c=='i'){
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Imaterial_diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Imaterial_ambient);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Imaterial_specular);
+		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);}
+	else if(c=='l'){
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Lmaterial_diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Lmaterial_ambient);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Lmaterial_specular);
+		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);}
+	else if(c=='z'){
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Zmaterial_diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Zmaterial_ambient);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Zmaterial_specular);
+		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);}
+	else if(c=='t'){
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Tmaterial_diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Tmaterial_ambient);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Tmaterial_specular);
+		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);}
+	else if(c=='y'){
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Ymaterial_diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Ymaterial_ambient);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Ymaterial_specular);
+		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);}
+	else if(c=='x'){
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Omaterial_diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Omaterial_ambient);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Omaterial_specular);
+		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);}
+	else{
+		glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Bmaterial_diffuse);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Bmaterial_ambient);
+		glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Bmaterial_specular);
+		glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
 		}
+		
+	
+	glBegin(GL_POLYGON);
+	glNormal3f(0,0,-1);
+	glVertex3f(x-0.5,y+0.5,z-0.5);
+	glVertex3f(x-0.5,y-0.5,z-0.5);	
+	glVertex3f(x+0.5,y-0.5,z-0.5);
+	glVertex3f(x+0.5,y+0.5,z-0.5);
+	glEnd();
+	
+	glBegin(GL_POLYGON);
+	glNormal3f(0,0,1);
+	glVertex3f(x-0.5,y+0.5,z+0.5);
+	glVertex3f(x-0.5,y-0.5,z+0.5);	
+	glVertex3f(x+0.5,y-0.5,z+0.5);
+	glVertex3f(x+0.5,y+0.5,z+0.5);
+	glEnd();
+	
+	glBegin(GL_POLYGON);
+	glNormal3f(0,1,0);
+	glVertex3f(x-0.5,y+0.5,z-0.5);
+	glVertex3f(x-0.5,y+0.5,z+0.5);	
+	glVertex3f(x+0.5,y+0.5,z+0.5);
+	glVertex3f(x+0.5,y+0.5,z-0.5);
+	glEnd();
+	
+	glBegin(GL_POLYGON);
+	glNormal3f(0,-1,0);
+	glVertex3f(x-0.5,y-0.5,z-0.5);
+	glVertex3f(x-0.5,y-0.5,z+0.5);	
+	glVertex3f(x+0.5,y-0.5,z+0.5);
+	glVertex3f(x+0.5,y-0.5,z-0.5);
+	glEnd();
+	
+	glBegin(GL_POLYGON);
+	glNormal3f(1,0,0);
+	glVertex3f(x+0.5,y+0.5,z+0.5);
+	glVertex3f(x+0.5,y+0.5,z-0.5);	
+	glVertex3f(x+0.5,y-0.5,z-0.5);
+	glVertex3f(x+0.5,y-0.5,z+0.5);
+	glEnd();
+	
+	glBegin(GL_POLYGON);
+	glNormal3f(-1,0,0);
+	glVertex3f(x-0.5,y+0.5,z+0.5);
+	glVertex3f(x-0.5,y+0.5,z-0.5);	
+	glVertex3f(x-0.5,y-0.5,z-0.5);
+	glVertex3f(x-0.5,y-0.5,z+0.5);
+	glEnd();
+        
+	//a sad ivice
+
+	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Bmaterial_diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,Bmaterial_ambient);
+	glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,Bmaterial_specular);
+	
+	glBegin(GL_LINES);
+	glVertex3f(x-0.5,y+0.5,z-0.5);
+	glVertex3f(x-0.5,y-0.5,z-0.5);	
+	glVertex3f(x+0.5,y-0.5,z-0.5);
+	glVertex3f(x+0.5,y+0.5,z-0.5);
+	glEnd();
+	
+	glBegin(GL_LINES);
+	glVertex3f(x-0.5,y+0.5,z+0.5);
+	glVertex3f(x-0.5,y-0.5,z+0.5);	
+	glVertex3f(x+0.5,y-0.5,z+0.5);
+	glVertex3f(x+0.5,y+0.5,z+0.5);
+	glEnd();
+	
+	glBegin(GL_LINES);
+	glVertex3f(x-0.5,y+0.5,z-0.5);
+	glVertex3f(x-0.5,y+0.5,z+0.5);	
+	glVertex3f(x+0.5,y+0.5,z+0.5);
+	glVertex3f(x+0.5,y+0.5,z-0.5);
+	glEnd();
+	
+	glBegin(GL_LINES);
+	glVertex3f(x-0.5,y-0.5,z-0.5);
+	glVertex3f(x-0.5,y-0.5,z+0.5);	
+	glVertex3f(x+0.5,y-0.5,z+0.5);
+	glVertex3f(x+0.5,y-0.5,z-0.5);
+	glEnd();
+	
+	glBegin(GL_LINES);
+	glVertex3f(x+0.5,y+0.5,z+0.5);
+	glVertex3f(x+0.5,y+0.5,z-0.5);	
+	glVertex3f(x+0.5,y-0.5,z-0.5);
+	glVertex3f(x+0.5,y-0.5,z+0.5);
+	glEnd();
+	
+	glBegin(GL_LINES);
+	glVertex3f(x-0.5,y+0.5,z+0.5);
+	glVertex3f(x-0.5,y+0.5,z-0.5);	
+	glVertex3f(x-0.5,y-0.5,z-0.5);
+	glVertex3f(x-0.5,y-0.5,z+0.5);
+	glEnd();
 }
 
-/*
-void oblik_T(int x,int y,int z)
+void oblik_TR(int x,int y,int z)
 {
-	glColor3f(0.3, 0.2, 0.2);
-	glTranslatef(x+1,y+0,z+0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(-1,0,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(-1,0,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(1,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
+	iscrtaj_kocku(x+1,y,z,'t');
+	iscrtaj_kocku(x,y,z,'t');
+	iscrtaj_kocku(x-1,y,z,'t');
+	iscrtaj_kocku(x,y+1,z,'t');
+}
+void oblik_OR(int x,int y,int z)
+{
+	iscrtaj_kocku(x,y,z,'o');
+	iscrtaj_kocku(x+1,y,z,'o');
+	iscrtaj_kocku(x,y+1,z,'o');
+	iscrtaj_kocku(x+1,y+1,z,'o');
+}
+void oblik_IR(int x,int y,int z)
+{
+	iscrtaj_kocku(x,y,z,'i');
+	iscrtaj_kocku(x,y+1,z,'i');
+	iscrtaj_kocku(x,y+2,z,'i');
+	iscrtaj_kocku(x,y+3,z,'i');
+}
+void oblik_LR(int x,int y,int z)
+{
+	iscrtaj_kocku(x,y,z,'l');
+	iscrtaj_kocku(x,y+1,z,'l');
+	iscrtaj_kocku(x,y+2,z,'l');
+	iscrtaj_kocku(x+1,y+2,z,'l');
+}
+void oblik_ZR(int x,int y,int z)
+{
+	iscrtaj_kocku(x,y,z,'z');
+	iscrtaj_kocku(x,y+1,z,'z');
+	iscrtaj_kocku(x+1,y+1,z,'z');
+	iscrtaj_kocku(x-1,y,z,'z');
+}
+void oblik_YR(int x,int y,int z)
+{
+	iscrtaj_kocku(x,y,z,'y');
+	iscrtaj_kocku(x-1,y,z,'y');
+	iscrtaj_kocku(x,y+1,z,'y');
+	iscrtaj_kocku(x,y,z-1,'y');
+}
+void oblik_XR(int x,int y,int z)
+{
+	iscrtaj_kocku(x,y,z,'x');
+	iscrtaj_kocku(x-1,y,z,'x');
+	iscrtaj_kocku(x,y+1,z,'x');
+	iscrtaj_kocku(x,y+1,z-1,'x');
 }
 
-void oblik_O(int x,int y,int z)
-{
-	glColor3f(0.5,0,0);
-	glTranslatef(x,y,z);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(1,0,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(-1,0,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-}
-
-void oblik_I(int x,int y,int z)
-{
-	glColor3f(0.6, 0.5, 0.75);
-	glTranslatef(x,y,z);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-}
-
-void oblik_J(int x,int y,int z)
-{
-	glColor3f(0,0,0.5);
-	glTranslatef(x,y,z);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(1,0,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-}
-
-void oblik_Z(int x,int y,int z)
-{
-	glColor3f(0,0.2,0);
-	glTranslatef(x,y,z);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(1,0,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(-2,-1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-}
-
-void oblik_Y(int x,int y,int z)
-{
-	glColor3f(1,1,0);
-	glTranslatef(x,y,z);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(-1,0,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(1,0,-1);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,1,1);
-	glutSolidCube(1);
-	glutWireCube(1);
-}
-
-void oblik_X(int x,int y,int z)
-{
-	glColor3f(1,0.5,0);
-	glTranslatef(x,y,z);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(-1,0,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(1,1,0);
-	glutSolidCube(1);
-	glutWireCube(1);
-	glTranslatef(0,0,-1);
-	glutSolidCube(1);
-	glutWireCube(1);
-}
-*/

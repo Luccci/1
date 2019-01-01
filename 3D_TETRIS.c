@@ -1,4 +1,5 @@
 #include <GL/glut.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
 #include <math.h>
@@ -43,6 +44,11 @@ int Pz=CENTAR;
 
 int brZ=0;
 int brX=0;
+
+bool blokNapred=false;
+bool blokNazad=false;
+bool blokLevo=false;
+bool blokDesno=false;
 
 //boje za svaki oblik
 
@@ -97,9 +103,9 @@ void iscrtaj_staticni_deo();
 void proveri_blokove();
 void proveri_blok(int i,int j,int k);
 
-
+/*
 void oblik_T(int x,int y,int z);
-/*void oblik_O(int x,int y,int z);
+void oblik_O(int x,int y,int z);
 void oblik_I(int x,int y,int z);
 void oblik_L(int x,int y,int z);
 void oblik_Z(int x,int y,int z);
@@ -194,7 +200,10 @@ static void on_display(void)
 	glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
 
 	postolje();
-	
+
+	proveri_blokove();
+	iscrtaj_staticni_deo();
+
 	glPushMatrix();
 	
 		glTranslatef(Px,Py-animation_param,Pz);
@@ -204,9 +213,7 @@ static void on_display(void)
 	
 		(*niz_pokazivaca_funkcija[token])(Px,Py-animation_param,Pz);
 	
-	glPopMatrix();
-	
-	iscrtaj_staticni_deo();	
+	glPopMatrix();	
 
 	glutSwapBuffers();
 	}
@@ -260,22 +267,22 @@ static void on_keyboard(unsigned char key,int x,int y)
 				rotacijaXgore();}
 			break;
 		case 'j':
-			if(animation_on){
+			if(!blokLevo && animation_on){
 				translacijaLevo();
 				}
 			break;
 		case 'i':
-			if(animation_on){
+			if(!blokNapred && animation_on){
 				translacijaNapred();
 				}
 			break;
 		case 'l':
-			if(animation_on){
+			if(!blokDesno && animation_on){
 				translacijaDesno();
 				}
 			break;
 		case 'k':
-			if(animation_on){
+			if(!blokNazad && animation_on){
 				translacijaNazad();
 				}
 			break;
@@ -293,90 +300,191 @@ static void on_keyboard(unsigned char key,int x,int y)
 static void on_timer(int value)
 {
 	if(value!=TIMER_ID)
-		return ;	
+		return ;
+		
+	bool indikator;
+	if(Py-animation_param>0 && pokretni_deo[1]>0 && pokretni_deo[4]>0 && pokretni_deo[7]>0){
+
+		if((Py-animation_param)-floor((Py-animation_param))==0 && animation_param!=0)
+			{
+				animation_on=0;
+				int x1=(int)pokretni_deo[0];
+				int y1=(int)pokretni_deo[1];
+				int z1=(int)pokretni_deo[2];
+	
+				int x2=(int)pokretni_deo[3];
+				int y2=(int)pokretni_deo[4];
+				int z2=(int)pokretni_deo[5];	
+	
+				int x3=(int)pokretni_deo[6];
+				int y3=(int)pokretni_deo[7];
+				int z3=(int)pokretni_deo[8];
+				int y4=(int)(Py-animation_param);
+				
+				if((prostorIgranja[x1][y1-1][z1].popunjen && (!prostorIgranja[x1][y1-1][z1].pokretan))
+				|| (prostorIgranja[x2][y2-1][z2].popunjen && (!prostorIgranja[x2][y2-1][z2].pokretan))
+				|| (prostorIgranja[x3][y3-1][z3].popunjen && (!prostorIgranja[x3][y3-1][z3].pokretan))
+				|| (prostorIgranja[Px][y4-1][Pz].popunjen 
+				&& (!prostorIgranja[Px][y4-1][Pz].pokretan)))
+				{
+					prostorIgranja[x1][y1][z1].popunjen=true;
+					prostorIgranja[x1][y1][z1].pokretan=false;
+					prostorIgranja[x1][y1][z1].boja=token;
+					prostorIgranja[x2][y2][z2].popunjen=true;
+					prostorIgranja[x2][y2][z2].pokretan=false;
+					prostorIgranja[x1][y2][z1].boja=token;
+					prostorIgranja[x3][y3][z3].popunjen=true;
+					prostorIgranja[x3][y3][z3].pokretan=false;
+					prostorIgranja[x1][y3][z1].boja=token;
+					prostorIgranja[Px][y4][Pz].popunjen=true;
+					prostorIgranja[Px][y4][Pz].pokretan=false;
+					prostorIgranja[Px][y4][Pz].boja=token;
+					indikator=true;								
+				}
+			}
+		else {
+			indikator=false;
+			animation_param = animation_param + brzina_pada;
+			pokretni_deo[1]=pokretni_deo[1]-brzina_pada;
+			pokretni_deo[4]=pokretni_deo[4]-brzina_pada;
+			pokretni_deo[7]=pokretni_deo[7]-brzina_pada;
+			}
+	}
+	else{
+		animation_on=0;
+		int x1=(int)pokretni_deo[0];
+		int y1=(int)pokretni_deo[1];
+		int z1=(int)pokretni_deo[2];
+	
+		int x2=(int)pokretni_deo[3];
+		int y2=(int)pokretni_deo[4];
+		int z2=(int)pokretni_deo[5];	
+	
+		int x3=(int)pokretni_deo[6];
+		int y3=(int)pokretni_deo[7];
+		int z3=(int)pokretni_deo[8];
+		int y4=(int)(Py-animation_param);		
+
+		prostorIgranja[x1][y1][z1].popunjen=true;
+		prostorIgranja[x1][y1][z1].pokretan=false;
+		prostorIgranja[x1][y1][z1].boja=token;
+		prostorIgranja[x2][y2][z2].popunjen=true;
+		prostorIgranja[x2][y2][z2].pokretan=false;
+		prostorIgranja[x1][y2][z1].boja=token;
+		prostorIgranja[x3][y3][z3].popunjen=true;
+		prostorIgranja[x3][y3][z3].pokretan=false;
+		prostorIgranja[x1][y3][z1].boja=token;
+		prostorIgranja[Px][y4][Pz].popunjen=true;
+		prostorIgranja[Px][y4][Pz].pokretan=false;
+		prostorIgranja[Px][y4][Pz].boja=token;
+		indikator=true;		
+	}
 	
 	glutPostRedisplay();
 	
-	if(animation_param<Py){
-		int x1=(int)pokretni_deo[0];
-		float y1=pokretni_deo[1];
-		int z1=(int)pokretni_deo[2];
-	
-		int x2=(int)pokretni_deo[3];
-		float y2=pokretni_deo[4];
-		int z2=(int)pokretni_deo[5];	
-	
-		int x3=(int)pokretni_deo[6];
-		float y3=pokretni_deo[7];
-		int z3=(int)pokretni_deo[8];
-		
-		if(y1-floor(y1)==0 && animation_param!=0)
-			{
-				if((prostorIgranja[x1][(int)(y1-1)][z1].popunjen && (!prostorIgranja[x1][(int)(y1-1)][z1].pokretan))
-				|| (prostorIgranja[x2][(int)(y2-1)][z2].popunjen && (!prostorIgranja[x2][(int)(y2-1)][z2].pokretan))
-				|| (prostorIgranja[x3][(int)(y3-1)][z3].popunjen && (!prostorIgranja[x3][(int)(y3-1)][z3].pokretan))
-				|| (prostorIgranja[Px][(int)(Py-animation_param-1)][Pz].popunjen 
-				&& (!prostorIgranja[Px][(int)(Py-animation_param-1)][Pz].pokretan)))
-				{
-					prostorIgranja[x1][(int)y1][z1].popunjen=true;
-					prostorIgranja[x1][(int)y1][z1].pokretan=false;
-					prostorIgranja[x2][(int)y2][z2].popunjen=true;
-					prostorIgranja[x2][(int)y2][z2].pokretan=false;
-					prostorIgranja[x3][(int)y3][z3].popunjen=true;
-					prostorIgranja[x3][(int)y3][z3].pokretan=false;
-					prostorIgranja[Px][(int)(Py-animation_param)][Pz].popunjen=true;
-					prostorIgranja[Px][(int)(Py-animation_param)][Pz].pokretan=false;
-					Px=CENTAR;
-					Pz=CENTAR;
-					animation_param=0;
-					animation_on=0;
-					proveri_blokove();
-				}
-			}
-		else 
-			animation_param = animation_param + brzina_pada;
-	}
-	else{
-		int x1=(int)pokretni_deo[0];
-		float y1=pokretni_deo[1];
-		int z1=(int)pokretni_deo[2];
-	
-		int x2=(int)pokretni_deo[3];
-		float y2=pokretni_deo[4];
-		int z2=(int)pokretni_deo[5];	
-	
-		int x3=(int)pokretni_deo[6];
-		float y3=pokretni_deo[7];
-		int z3=(int)pokretni_deo[8];
-		
-		prostorIgranja[x1][(int)y1][z1].popunjen=true;
-		prostorIgranja[x1][(int)y1][z1].pokretan=false;
-		prostorIgranja[x2][(int)y2][z2].popunjen=true;
-		prostorIgranja[x2][(int)y2][z2].pokretan=false;
-		prostorIgranja[x3][(int)y3][z3].popunjen=true;
-		prostorIgranja[x3][(int)y3][z3].pokretan=false;
-		prostorIgranja[Px][(int)(Py-animation_param)][Pz].popunjen=true;
-		prostorIgranja[Px][(int)(Py-animation_param)][Pz].pokretan=false;
+	if(indikator){
+		animation_param=0;
+		brzina_pada=0.01;
 		Px=CENTAR;
 		Pz=CENTAR;
-		animation_param=0;
-		animation_on=0;
-		proveri_blokove();
-	}
-	
-	if(animation_param==0){
-		brzina_pada=0.01;
-		token=izracunaj_token();}	
+		token=izracunaj_token();
+		animation_on=1;
+		}	
 	
 	if(animation_on){
 		glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
 	}
 }
 
-
 int izracunaj_token(){
 	srand(time(NULL));
 	int r=rand()%BROJ_OBLIKA;
+	
+	if(r==0)
+		{
+			pokretni_deo[0]=Px+1;
+			pokretni_deo[1]=Py;
+			pokretni_deo[2]=Pz;
+			pokretni_deo[3]=Px-1;
+			pokretni_deo[4]=Py;
+			pokretni_deo[5]=Pz;
+			pokretni_deo[6]=Px;
+			pokretni_deo[7]=Py+1;
+			pokretni_deo[8]=Pz;
+		}
+	else if(r==1)
+		{
+			pokretni_deo[0]=Px+1;
+			pokretni_deo[1]=Py;
+			pokretni_deo[2]=Pz;
+			pokretni_deo[3]=Px;
+			pokretni_deo[4]=Py+1;
+			pokretni_deo[5]=Pz;
+			pokretni_deo[6]=Px+1;
+			pokretni_deo[7]=Py+1;
+			pokretni_deo[8]=Pz;
+		}
+	else if(r==2)
+		{
+			pokretni_deo[0]=Px;
+			pokretni_deo[1]=Py+1;
+			pokretni_deo[2]=Pz;
+			pokretni_deo[3]=Px;
+			pokretni_deo[4]=Py-1;
+			pokretni_deo[5]=Pz;
+			pokretni_deo[6]=Px;
+			pokretni_deo[7]=Py+2;
+			pokretni_deo[8]=Pz;
+		}
+	else if(r==3)
+		{
+			pokretni_deo[0]=Px;
+			pokretni_deo[1]=Py-1;
+			pokretni_deo[2]=Pz;
+			pokretni_deo[3]=Px;
+			pokretni_deo[4]=Py+1;
+			pokretni_deo[5]=Pz;
+			pokretni_deo[6]=Px+1;
+			pokretni_deo[7]=Py+1;
+			pokretni_deo[8]=Pz;
+		}
+	else if(r==4)
+		{
+			pokretni_deo[0]=Px;
+			pokretni_deo[1]=Py+1;
+			pokretni_deo[2]=Pz;
+			pokretni_deo[3]=Px+1;
+			pokretni_deo[4]=Py+1;
+			pokretni_deo[5]=Pz;
+			pokretni_deo[6]=Px-1;
+			pokretni_deo[7]=Py;
+			pokretni_deo[8]=Pz;
+		}
+	else if(r==5)
+		{
+			pokretni_deo[0]=Px-1;
+			pokretni_deo[1]=Py;
+			pokretni_deo[2]=Pz;
+			pokretni_deo[3]=Px;
+			pokretni_deo[4]=Py+1;
+			pokretni_deo[5]=Pz;
+			pokretni_deo[6]=Px;
+			pokretni_deo[7]=Py;
+			pokretni_deo[8]=Pz-1;
+		}
+	else 
+		{
+			pokretni_deo[0]=Px-1;
+			pokretni_deo[1]=Py;
+			pokretni_deo[2]=Pz;
+			pokretni_deo[3]=Px;
+			pokretni_deo[4]=Py+1;
+			pokretni_deo[5]=Pz;
+			pokretni_deo[6]=Px;
+			pokretni_deo[7]=Py+1;
+			pokretni_deo[8]=Pz-1;
+		}
+
 	return r;
 }
 
@@ -409,7 +517,6 @@ int i,j,k;
 			}
 		}
 	}
-	animation_on=1;
 }
 
 void proveri_blok(int i,int j,int k){
@@ -486,12 +593,11 @@ void inicijalizuj_matricu(void)
 	}
 }
 
-
 //provera ispravnosti rotacije
 
 void rotacijaZlevo(void){
 
-	int p1;
+	int p1;                      //pomocna promenljiva
 	int x1=(int)pokretni_deo[0];
 	float y1=pokretni_deo[1];
 	int z1=(int)pokretni_deo[2];
@@ -503,54 +609,55 @@ void rotacijaZlevo(void){
 	int x3=(int)pokretni_deo[6];
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];
+	float y4=Py-animation_param;
 	
 	if(x1-Px>0)
 	{
-		if((y1-Py+animation_param) >0){
+		if((y1-y4) >0){
 			p1=x1;
-			x1=Px+y1-Py+animation_param;
-			y1=Py-animation_param-p1+Px;
+			x1=Px+y1-y4;
+			y1=y4-p1+Px;
 		}
-		else if((y1-Py+animation_param)==0){
+		else if((y1-y4)==0){
 			p1=y1;			
-			y1=Py-animation_param-x1+Px;
+			y1=y4-x1+Px;
 			x1=Px;		
 		}
 		else{
 			p1=x1;
-			x1=Px+y1-Py+animation_param;
-			y1=Py-animation_param;
+			x1=Px+y1-y4;
+			y1=y4;
 		}
 	}
 	else if(x1-Px==0)
 	{
-		if(Py-animation_param > y1){
+		if(y4 > y1){
 			p1=x1;
-			x1=Px-Py+animation_param+y1;
-			y1=Py-animation_param;
+			x1=Px-y4+y1;
+			y1=y4;
 		}
 		else{
 			p1=x1;
-			x1=Px+y1-Py+animation_param;
-			y1=Py-animation_param;
+			x1=Px+y1-y4;
+			y1=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y1){
+		if(y4 > y1){
 			p1=x1;
-			x1=Px+y1-Py+animation_param;
-			y1=Py-animation_param+Px-p1;
+			x1=Px+y1-y4;
+			y1=y4+Px-p1;
 		}
-		else if(Py-animation_param == y1){
+		else if(y4 == y1){
 			p1=y1;
-			y1=Px-x1+Py-animation_param;
+			y1=Px-x1+y4;
 			x1=Px;
 		}
 		else{
 			p1=y1;
-			y1=Py-animation_param+Px-x1;
-			x1=Px+p1-Py+animation_param;
+			y1=y4+Px-x1;
+			x1=Px+p1-y4;
 		}
 	}
 
@@ -558,51 +665,51 @@ void rotacijaZlevo(void){
 
 	if(x2-Px>0)
 	{
-		if((y2-Py+animation_param) >0){
+		if((y2-y4) >0){
 			p1=x2;
-			x2=Px+y2-Py+animation_param;
-			y2=Py-animation_param-p1+Px;
+			x2=Px+y2-y4;
+			y2=y4-p1+Px;
 		}
-		else if((y2-Py+animation_param)==0){
+		else if((y2-y4)==0){
 			p1=y2;			
-			y2=Py-animation_param-x2+Px;
+			y2=y4-x2+Px;
 			x2=Px;		
 		}
 		else{
 			p1=x2;
-			x2=Px+y2-Py+animation_param;
-			y2=Py-animation_param;
+			x2=Px+y2-y4;
+			y2=y4;
 		}
 	}
 	else if(x2-Px==0)
 	{
-		if(Py-animation_param > y2){
+		if(y4 > y2){
 			p1=x2;
-			x2=Px-Py+animation_param+y2;
-			y2=Py-animation_param;
+			x2=Px-y4+y2;
+			y2=y4;
 		}
 		else{
 			p1=x2;
-			x2=Px+y2-Py+animation_param;
-			y2=Py-animation_param;
+			x2=Px+y2-y4;
+			y2=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y2){
+		if(y4 > y2){
 			p1=x2;
-			x2=Px+y2-Py+animation_param;
-			y2=Py-animation_param+Px-p1;
+			x2=Px+y2-y4;
+			y2=y4+Px-p1;
 		}
-		else if(Py-animation_param == y2){
+		else if(y4 == y2){
 			p1=y2;
-			y2=Px-x2+Py-animation_param;
+			y2=Px-x2+y4;
 			x2=Px;
 		}
 		else{
 			p1=y2;
-			y2=Py-animation_param+Px-x2;
-			x2=Px+p1-Py+animation_param;
+			y2=y4+Px-x2;
+			x2=Px+p1-y4;
 		}
 	}
 
@@ -610,62 +717,62 @@ void rotacijaZlevo(void){
 	
 	if(x3-Px>0)
 	{
-		if((y3-Py+animation_param) >0){
+		if((y3-y4) >0){
 			p1=x3;
-			x3=Px+y3-Py+animation_param;
-			y3=Py-animation_param-p1+Px;
+			x3=Px+y3-y4;
+			y3=y4-p1+Px;
 		}
-		else if((y3-Py+animation_param)==0){
+		else if((y3-y4)==0){
 			p1=y3;			
-			y3=Py-animation_param-x3+Px;
+			y3=y4-x3+Px;
 			x3=Px;		
 		}
 		else{
 			p1=x3;
-			x3=Px+y3-Py+animation_param;
-			y3=Py-animation_param;
+			x3=Px+y3-y4;
+			y3=y4;
 		}
 	}
 	else if(x3-Px==0)
 	{
-		if(Py-animation_param > y3){
+		if(y4 > y3){
 			p1=x3;
-			x3=Px-Py+animation_param+y3;
-			y3=Py-animation_param;
+			x3=Px-y4+y3;
+			y3=y4;
 		}
 		else{
 			p1=x3;
-			x3=Px+y3-Py+animation_param;
-			y3=Py-animation_param;
+			x3=Px+y3-y4;
+			y3=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y3){
+		if(y4 > y3){
 			p1=x3;
-			x3=Px+y3-Py+animation_param;
-			y3=Py-animation_param+Px-p1;
+			x3=Px+y3-y4;
+			y3=y4+Px-p1;
 		}
-		else if(Py-animation_param == y3){
+		else if(y4 == y3){
 			p1=y3;
-			y3=Px-x3+Py-animation_param;
+			y3=Px-x3+y4;
 			x3=Px;
 		}
 		else{
 			p1=y3;
-			y3=Py-animation_param+Px-x3;
-			x3=Px+p1-Py+animation_param;
+			y3=y4+Px-x3;
+			x3=Px+p1-y4;
 		}
 	}
 
 	brZ++;
-	if( (prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
+	if(x1<0 || x2<0 || x3<0 || y1<0 || y2<0 || y3<0 || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA || 
+	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
 	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1].pokretan))
 	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2].pokretan))
 	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2].pokretan))
 	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan))
-	|| x1<0 || x2<0 || x3<0	|| y1<0 || y2<0 || y3<0 || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA )	
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan)))	
 		brZ--;		
 }
 
@@ -683,54 +790,55 @@ void rotacijaZdesno(void){
 	int x3=(int)pokretni_deo[6];
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];
+	float y4=Py-animation_param;
 	
 	if(x1-Px>0)
 	{
-		if((y1-Py+animation_param) >0){
+		if((y1-y4) >0){
 			p1=x1;
-			x1=Px-y1+Py-animation_param;
-			y1=Py-animation_param+p1-Px;
+			x1=Px-y1+y4;
+			y1=y4+p1-Px;
 		}
-		else if((y1-Py+animation_param)==0){
+		else if((y1-y4)==0){
 			p1=y1;			
-			y1=Py-animation_param+x1-Px;
+			y1=y4+x1-Px;
 			x1=Px;		
 		}
 		else{
 			p1=x1;
-			x1=Px+Py-animation_param-y1;
-			y1=p1-Px+Py-animation_param;
+			x1=Px+y4-y1;
+			y1=p1-Px+y4;
 		}
 	}
 	else if(x1-Px==0)
 	{
-		if(Py-animation_param > y1){
+		if(y4 > y1){
 			p1=x1;
-			x1=Px+Py-animation_param-y1;
-			y1=Py-animation_param;
+			x1=Px+y4-y1;
+			y1=y4;
 		}
 		else{
 			p1=x1;
-			x1=Px-y1+Py-animation_param;
-			y1=Py-animation_param;
+			x1=Px-y1+y4;
+			y1=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y1){
+		if(y4 > y1){
 			p1=y1;
-			y1=x1-Px+Py-animation_param;
-			x1=Py-animation_param-p1+Px;
+			y1=x1-Px+y4;
+			x1=y4-p1+Px;
 		}
-		else if(Py-animation_param == y1){
+		else if(y4 == y1){
 			p1=y1;
-			y1=Py-animation_param-Px+x1;
+			y1=y4-Px+x1;
 			x1=Px;
 		}
 		else{
 			p1=x1;
-			x1=Px-Py-animation_param-y1;
-			y1=Py-animation_param-Px+p1;
+			x1=Px-y1+y4;
+			y1=y4-Px+p1;
 		}
 	}
 
@@ -738,51 +846,51 @@ void rotacijaZdesno(void){
 
 	if(x2-Px>0)
 	{
-		if((y2-Py+animation_param) >0){
+		if((y2-y4) >0){
 			p1=x2;
-			x2=Px-y2+Py-animation_param;
-			y2=Py-animation_param+p1-Px;
+			x2=Px-y2+y4;
+			y2=y4+p1-Px;
 		}
-		else if((y2-Py+animation_param)==0){
+		else if((y2-y4)==0){
 			p1=y2;			
-			y2=Py-animation_param+x2-Px;
+			y2=y4+x2-Px;
 			x2=Px;		
 		}
 		else{
 			p1=x2;
-			x2=Px+Py-animation_param-y2;
-			y2=p1-Px+Py-animation_param;
+			x2=Px+y4-y2;
+			y2=p1-Px+y4;
 		}
 	}
 	else if((x2-Px)==0)
 	{
-		if(Py-animation_param > y2){
+		if(y4 > y2){
 			p1=x2;
-			x2=Px+Py-animation_param-y2;
-			y2=Py-animation_param;
+			x2=Px+y4-y2;
+			y2=y4;
 		}
 		else{
 			p1=x2;
-			x2=Px-y2+Py-animation_param;
-			y2=Py-animation_param;
+			x2=Px-y2+y4;
+			y2=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y2){
+		if(y4 > y2){
 			p1=y2;
-			y2=x2-Px+Py-animation_param;
-			x2=Py-animation_param-p1+Px;
+			y2=x2-Px+y4;
+			x2=y4-p1+Px;
 		}
-		else if(Py-animation_param == y2){
+		else if(y4 == y2){
 			p1=y2;
-			y2=Py-animation_param-Px+x2;
+			y2=y4-Px+x2;
 			x2=Px;
 		}
 		else{
 			p1=x2;
-			x2=Px-Py-animation_param-y2;
-			y2=Py-animation_param-Px+p1;
+			x2=Px+y4-y2;
+			y2=y4-Px+p1;
 		}
 	}
 
@@ -790,62 +898,62 @@ void rotacijaZdesno(void){
 
 	if(x3-Px>0)
 	{
-		if((y3-Py+animation_param) >0){
+		if((y3-y4) >0){
 			p1=x3;
-			x3=Px-y3+Py-animation_param;
-			y3=Py-animation_param+p1-Px;
+			x3=Px-y3+y4;
+			y3=y4+p1-Px;
 		}
-		else if((y3-Py+animation_param)==0){
+		else if((y3-y4)==0){
 			p1=y3;			
-			y3=Py-animation_param+x3-Px;
+			y3=y4+x3-Px;
 			x3=Px;		
 		}
 		else{
 			p1=x3;
-			x3=Px+Py-animation_param-y3;
-			y3=p1-Px+Py-animation_param;
+			x3=Px+y4-y3;
+			y3=p1-Px+y4;
 		}
 	}
 	else if(x3-Px==0)
 	{
-		if(Py-animation_param > y3){
+		if(y4 > y3){
 			p1=x3;
-			x3=Px+Py-animation_param-y3;
-			y3=Py-animation_param;
+			x3=Px+y4-y3;
+			y3=y4;
 		}
 		else{
 			p1=x3;
-			x3=Px-y3+Py-animation_param;
-			y3=Py-animation_param;
+			x3=Px-y3+y4;
+			y3=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y3){
+		if(y4 > y3){
 			p1=y3;
-			y3=x3-Px+Py-animation_param;
-			x3=Py-animation_param-p1+Px;
+			y3=x3-Px+y4;
+			x3=y4-p1+Px;
 		}
-		else if(Py-animation_param == y3){
+		else if(y4 == y3){
 			p1=y3;
-			y3=Py-animation_param-Px+x3;
+			y3=y4-Px+x3;
 			x3=Px;
 		}
 		else{
 			p1=x3;
-			x3=Px-Py-animation_param-y3;
-			y3=Py-animation_param-Px+p1;
+			x3=Px+y4-y3;
+			y3=y4-Px+p1;
 		}
 	}
 
 	brZ--;
-	if( (prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
+	if( x1<0 || x2<0 || x3<0 || y1<0 || y2<0 || y3<0 || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA ||
+	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
 	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1].pokretan))
 	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2].pokretan))
 	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2].pokretan))
 	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan))
-	|| x1<0 || x2<0 || x3<0	|| y1<0 || y2<0 || y3<0 || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA )	
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan)))	
 		brZ++;
 }
 
@@ -863,54 +971,55 @@ void rotacijaXdole(void){
 	int x3=(int)pokretni_deo[6];
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];
-	
+	float y4=Py-animation_param;
+
 	if(z1-Pz>0)
 	{
-		if((y1-Py+animation_param) >0){
+		if((y1-y4) >0){
 			p1=z1;
-			z1=Pz-y1+Py-animation_param;
-			y1=Py-animation_param+p1-Pz;
+			z1=Pz-y1+y4;
+			y1=y4+p1-Pz;
 		}
-		else if((y1-Py+animation_param)==0){
+		else if((y1-y4)==0){
 			p1=y1;			
-			y1=Py-animation_param+z1-Pz;
+			y1=y4+z1-Pz;
 			z1=Pz;		
 		}
 		else{
 			p1=z1;
-			z1=Pz+Py-animation_param-y1;
-			y1=p1-Pz+Py-animation_param;
+			z1=Pz+y4-y1;
+			y1=p1-Pz+y4;
 		}
 	}
 	else if(z1-Pz==0)
 	{
-		if(Py-animation_param > y1){
+		if(y4 > y1){
 			p1=z1;
-			z1=Pz+Py-animation_param-y1;
-			y1=Py-animation_param;
+			z1=Pz+y4-y1;
+			y1=y4;
 		}
 		else{
 			p1=z1;
-			z1=Pz-y1+Py-animation_param;
-			y1=Py-animation_param;
+			z1=Pz-y1+y4;
+			y1=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y1){
+		if(y4 > y1){
 			p1=y1;
-			y1=z1-Pz+Py-animation_param;
-			z1=Py-animation_param-p1+Pz;
+			y1=z1-Pz+y4;
+			z1=y4-p1+Pz;
 		}
-		else if(Py-animation_param == y1){
+		else if(y4 == y1){
 			p1=y1;
-			y1=Py-animation_param-Pz+z1;
+			y1=y4-Pz+z1;
 			x1=Px;
 		}
 		else{
 			p1=z1;
-			z1=Pz-Py-animation_param-y1;
-			y1=Py-animation_param-Pz+p1;
+			z1=Pz+y4-y1;
+			y1=y4-Pz+p1;
 		}
 	}
 
@@ -918,51 +1027,51 @@ void rotacijaXdole(void){
 
 	if(z2-Pz>0)
 	{
-		if((y2-Py+animation_param) >0){
+		if((y2-y4) >0){
 			p1=z2;
-			z2=Pz-y2+Py-animation_param;
-			y2=Py-animation_param+p1-Pz;
+			z2=Pz-y2+y4;
+			y2=y4+p1-Pz;
 		}
-		else if((y2-Py+animation_param)==0){
+		else if((y2-y4)==0){
 			p1=y2;			
-			y2=Py-animation_param+z2-Pz;
+			y2=y4+z2-Pz;
 			z2=Pz;		
 		}
 		else{
 			p1=z2;
-			z2=Pz+Py-animation_param-y2;
-			y2=p1-Pz+Py-animation_param;
+			z2=Pz+y4-y2;
+			y2=p1-Pz+y4;
 		}
 	}
 	else if(z2-Pz==0)
 	{
-		if(Py-animation_param > y2){
+		if(y4 > y2){
 			p1=z2;
-			z2=Pz+Py-animation_param-y2;
-			y2=Py-animation_param;
+			z2=Pz+y4-y2;
+			y2=y4;
 		}
 		else{
 			p1=z2;
-			z2=Pz-y2+Py-animation_param;
-			y2=Py-animation_param;
+			z2=Pz-y2+y4;
+			y2=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y2){
+		if(y4 > y2){
 			p1=y2;
-			y2=z2-Pz+Py-animation_param;
-			z2=Py-animation_param-p1+Pz;
+			y2=z2-Pz+y4;
+			z2=y4-p1+Pz;
 		}
-		else if(Py-animation_param == y2){
+		else if(y4 == y2){
 			p1=y2;
-			y2=Py-animation_param-Pz+z2;
+			y2=y4-Pz+z2;
 			z2=Pz;
 		}
 		else{
 			p1=z2;
-			z2=Pz-Py-animation_param-y2;
-			y2=Py-animation_param-Pz+p1;
+			z2=Pz+y4-y2;
+			y2=y4-Pz+p1;
 		}
 	}
 
@@ -970,62 +1079,62 @@ void rotacijaXdole(void){
 
 	if(z3-Pz>0)
 	{
-		if((y3-Py+animation_param) >0){
+		if((y3-y4) >0){
 			p1=z3;
-			z3=Pz-y3+Py-animation_param;
-			y3=Py-animation_param+p1-Pz;
+			z3=Pz-y3+y4;
+			y3=y4+p1-Pz;
 		}
-		else if((y3-Py+animation_param)==0){
+		else if((y3-y4)==0){
 			p1=y3;			
-			y3=Py-animation_param+z3-Pz;
+			y3=y4+z3-Pz;
 			z3=Pz;		
 		}
 		else{
 			p1=z3;
-			z3=Pz+Py-animation_param-y3;
-			y3=p1-Pz+Py-animation_param;
+			z3=Pz+y4-y3;
+			y3=p1-Pz+y4;
 		}
 	}
 	else if(z3-Pz==0)
 	{
-		if(Py-animation_param > y3){
+		if(y4 > y3){
 			p1=z3;
-			z3=Pz+Py-animation_param-y3;
-			y3=Py-animation_param;
+			z3=Pz+y4-y3;
+			y3=y4;
 		}
 		else{
 			p1=z3;
-			z3=Pz-y3+Py-animation_param;
-			y3=Py-animation_param;
+			z3=Pz-y3+y4;
+			y3=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y3){
+		if(y4 > y3){
 			p1=y3;
-			y3=z3-Pz+Py-animation_param;
-			z3=Py-animation_param-p1+Pz;
+			y3=z3-Pz+y4;
+			z3=y4-p1+Pz;
 		}
-		else if(Py-animation_param == y3){
+		else if(y4 == y3){
 			p1=y3;
-			y3=Py-animation_param-Pz+z3;
+			y3=y4-Pz+z3;
 			z3=Pz;
 		}
 		else{
 			p1=z3;
-			z3=Pz-Py-animation_param-y3;
-			y3=Py-animation_param-Pz+p1;
+			z3=Pz+y4-y3;
+			y3=y4-Pz+p1;
 		}
 	}
 
 	brX--;
-	if( (prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
+	if( z1<0 || z2<0 || z3<0 || y1<0 || y2<0 || y3<0 || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA ||
+	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
 	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1].pokretan))
 	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2].pokretan))
 	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2].pokretan))
 	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan))
-	|| z1<0 || z2<0 || z3<0	|| y1<0 || y2<0 || y3<0 || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA )	
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan)))	
 		brX++;
 }
 
@@ -1043,54 +1152,55 @@ void rotacijaXgore(void){
 	int x3=(int)pokretni_deo[6];
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];
-	
+	float y4=Py-animation_param;	
+
 	if(z1-Pz>0)
 	{
-		if((y1-Py+animation_param) >0){
+		if((y1-y4) >0){
 			p1=z1;
-			z1=Pz+y1-Py+animation_param;
-			y1=Py-animation_param-p1+Pz;
+			z1=Pz+y1-y4;
+			y1=y4-p1+Pz;
 		}
-		else if((y1-Py+animation_param)==0){
+		else if((y1-y4)==0){
 			p1=y1;			
-			y1=Py-animation_param-z1+Pz;
+			y1=y4-z1+Pz;
 			z1=Pz;		
 		}
 		else{
 			p1=z1;
-			z1=Pz+y1-Py+animation_param;
-			y1=Py-animation_param;
+			z1=Pz+y1-y4;
+			y1=y4;
 		}
 	}
 	else if(z1-Pz==0)
 	{
-		if(Py-animation_param > y1){
+		if(y4 > y1){
 			p1=z1;
-			z1=Pz-Py+animation_param+y1;
-			y1=Py-animation_param;
+			z1=Pz-y4+y1;
+			y1=y4;
 		}
 		else{
 			p1=z1;
-			z1=Pz+y1-Py+animation_param;
-			y1=Py-animation_param;
+			z1=Pz+y1-y4;
+			y1=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y1){
+		if(y4 > y1){
 			p1=z1;
-			z1=Pz+y1-Py+animation_param;
-			y1=Py-animation_param+Pz-p1;
+			z1=Pz+y1-y4;
+			y1=y4+Pz-p1;
 		}
-		else if(Py-animation_param == y1){
+		else if(y4 == y1){
 			p1=y1;
-			y1=Pz-z1+Py-animation_param;
+			y1=Pz-z1+y4;
 			z1=Pz;
 		}
 		else{
 			p1=y1;
-			y1=Py-animation_param+Pz-z1;
-			z1=Pz+p1-Py+animation_param;
+			y1=y4+Pz-z1;
+			z1=Pz+p1-y4;
 		}
 	}
 
@@ -1098,51 +1208,51 @@ void rotacijaXgore(void){
 
 	if(z2-Pz>0)
 	{
-		if((y2-Py+animation_param) >0){
+		if((y2-y4) >0){
 			p1=z2;
-			z2=Pz+y2-Py+animation_param;
-			y2=Py-animation_param-p1+Pz;
+			z2=Pz+y2-y4;
+			y2=y4-p1+Pz;
 		}
-		else if((y2-Py+animation_param)==0){
+		else if((y2-y4)==0){
 			p1=y2;			
-			y2=Py-animation_param-z2+Pz;
+			y2=y4-z2+Pz;
 			z2=Pz;		
 		}
 		else{
 			p1=z2;
-			z2=Pz+y2-Py+animation_param;
-			y2=Py-animation_param;
+			z2=Pz+y2-y4;
+			y2=y4;
 		}
 	}
 	else if(z2-Pz==0)
 	{
-		if(Py-animation_param > y2){
+		if(y4 > y2){
 			p1=z2;
-			z2=Pz-Py+animation_param+y2;
-			y2=Py-animation_param;
+			z2=Pz-y4+y2;
+			y2=y4;
 		}
 		else{
 			p1=z2;
-			z2=Pz+y2-Py+animation_param;
-			y2=Py-animation_param;
+			z2=Pz+y2-y4;
+			y2=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y2){
+		if(y4 > y2){
 			p1=z2;
-			z2=Pz+y2-Py+animation_param;
-			y2=Py-animation_param+Pz-p1;
+			z2=Pz+y2-y4;
+			y2=y4+Pz-p1;
 		}
-		else if(Py-animation_param == y2){
+		else if(y4 == y2){
 			p1=y2;
-			y2=Pz-z2+Py-animation_param;
+			y2=Pz-z2+y4;
 			z2=Pz;
 		}
 		else{
 			p1=y2;
-			y2=Py-animation_param+Pz-z2;
-			z2=Pz+p1-Py+animation_param;
+			y2=y4+Pz-z2;
+			z2=Pz+p1-y4;
 		}
 	}
 
@@ -1150,62 +1260,62 @@ void rotacijaXgore(void){
 
 	if(z3-Pz>0)
 	{
-		if((y3-Py+animation_param) >0){
+		if((y3-y4) >0){
 			p1=z3;
-			z3=Pz+y3-Py+animation_param;
-			y3=Py-animation_param-p1+Pz;
+			z3=Pz+y3-y4;
+			y3=y4-p1+Pz;
 		}
-		else if((y3-Py+animation_param)==0){
+		else if((y3-y4)==0){
 			p1=y3;			
-			y3=Py-animation_param-z3+Pz;
+			y3=y4-z3+Pz;
 			z3=Pz;		
 		}
 		else{
 			p1=z3;
-			z3=Pz+y3-Py+animation_param;
-			y3=Py-animation_param;
+			z3=Pz+y3-y4;
+			y3=y4;
 		}
 	}
 	else if(z3-Pz==0)
 	{
-		if(Py-animation_param > y3){
+		if(y4 > y3){
 			p1=z3;
-			z3=Pz-Py+animation_param+y3;
-			y3=Py-animation_param;
+			z3=Pz-y4+y3;
+			y3=y4;
 		}
 		else{
 			p1=z3;
-			z3=Pz+y3-Py+animation_param;
-			y3=Py-animation_param;
+			z3=Pz+y3-y4;
+			y3=y4;
 		}
 	}
 	else
 	{
-		if(Py-animation_param > y3){
+		if(y4 > y3){
 			p1=z3;
-			z3=Pz+y3-Py+animation_param;
-			y3=Py-animation_param+Pz-p1;
+			z3=Pz+y3-y4;
+			y3=y4+Pz-p1;
 		}
-		else if(Py-animation_param == y3){
+		else if(y4 == y3){
 			p1=y3;
-			y3=Pz-z3+Py-animation_param;
+			y3=Pz-z3+y4;
 			z3=Pz;
 		}
 		else{
 			p1=y3;
-			y3=Py-animation_param+Pz-z3;
-			z3=Pz+p1-Py+animation_param;
+			y3=y4+Pz-z3;
+			z3=Pz+p1-y4;
 		}
 	}
 	
 	brX++;
-	if( (prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
+	if(z1<0 || z2<0 || z3<0	|| y1<0 || y2<0 || y3<0 || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA ||
+	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
 	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1].pokretan))
 	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2].pokretan))
 	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2].pokretan))
 	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan))
-	|| z1<0 || z2<0 || z3<0	|| y1<0 || y2<0 || y3<0 || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA )	
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan)))	
 		brX--;
 }
 
@@ -1223,23 +1333,24 @@ void translacijaLevo(void){
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];
 	
-	Px--;
-	if( (prostorIgranja[x1-1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1-1][(int)floor(y1)][z1].pokretan))
-	|| (prostorIgranja[x1-1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1-1][(int)ceil(y1)][z1].pokretan))
-	|| (prostorIgranja[x2-1][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2-1][(int)floor(y2)][z2].pokretan))
-	|| (prostorIgranja[x2-1][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2-1][(int)ceil(y2)][z2].pokretan))
-	|| (prostorIgranja[x3-1][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3-1][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3-1][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3-1][(int)ceil(y3)][z3].pokretan))
+	if(Px>=SIRINA || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA ||
+	(prostorIgranja[x1+1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1+1][(int)floor(y1)][z1].pokretan))
+	|| (prostorIgranja[x1+1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1+1][(int)ceil(y1)][z1].pokretan))
+	|| (prostorIgranja[x2+1][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2+1][(int)floor(y2)][z2].pokretan))
+	|| (prostorIgranja[x2+1][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2+1][(int)ceil(y2)][z2].pokretan))
+	|| (prostorIgranja[x3+1][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3+1][(int)floor(y3)][z3].pokretan))
+	|| (prostorIgranja[x3+1][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3+1][(int)ceil(y3)][z3].pokretan))
 	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].popunjen 
 	&& (!prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].pokretan))
 	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan))
-	|| Px<0 || x1<0 || x2<0 || x3<0	)
-		Px++;
+	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan)))
+		blokLevo=true;
 	else{
+		Px++;
 		pokretni_deo[0]=x1-1;
 		pokretni_deo[3]=x2-1;
 		pokretni_deo[6]=x3-1;
+		blokDesno=false;
 		}
 }
 
@@ -1257,23 +1368,24 @@ void translacijaDesno(void){
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];	
 		
-	Px++;
-	if( (prostorIgranja[x1+1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1+1][(int)floor(y1)][z1].pokretan))
-	|| (prostorIgranja[x1+1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1+1][(int)ceil(y1)][z1].pokretan))
-	|| (prostorIgranja[x2+1][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2+1][(int)floor(y2)][z2].pokretan))
-	|| (prostorIgranja[x2+1][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2+1][(int)ceil(y2)][z2].pokretan))
-	|| (prostorIgranja[x3+1][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3+1][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3+1][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3+1][(int)ceil(y3)][z3].pokretan))
+	if(Px<0 || x1<0 || x2<0 || x3<0 ||
+	(prostorIgranja[x1-1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1-1][(int)floor(y1)][z1].pokretan))
+	|| (prostorIgranja[x1-1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1-1][(int)ceil(y1)][z1].pokretan))
+	|| (prostorIgranja[x2-1][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2-1][(int)floor(y2)][z2].pokretan))
+	|| (prostorIgranja[x2-1][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2-1][(int)ceil(y2)][z2].pokretan))
+	|| (prostorIgranja[x3-1][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3-1][(int)floor(y3)][z3].pokretan))
+	|| (prostorIgranja[x3-1][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3-1][(int)ceil(y3)][z3].pokretan))
 	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].popunjen 
 	&& (!prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].pokretan))
 	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan))
-	|| Px>=SIRINA || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA	)
-		Px--;
+	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan)))
+		blokDesno=true;
 	else{
+		Px--;
 		pokretni_deo[0]=x1+1;
 		pokretni_deo[3]=x2+1;
 		pokretni_deo[6]=x3+1;
+		blokLevo=false;
 		}	
 }
 	
@@ -1291,23 +1403,24 @@ void translacijaNapred(void){
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];	
 	
-	Pz--;
-	if( (prostorIgranja[x1][(int)floor(y1)][z1-1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1-1].pokretan))
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1-1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1-1].pokretan))
-	|| (prostorIgranja[x2][(int)floor(y2)][z2-1].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2-1].pokretan))
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2-1].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2-1].pokretan))
-	|| (prostorIgranja[x3][(int)floor(y3)][z3-1].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3-1].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3-1].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3-1].pokretan))
+	if(Pz>=DUZINA || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA ||
+	 (prostorIgranja[x1][(int)floor(y1)][z1+1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1+1].pokretan))
+	|| (prostorIgranja[x1][(int)ceil(y1)][z1+1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1+1].pokretan))
+	|| (prostorIgranja[x2][(int)floor(y2)][z2+1].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2+1].pokretan))
+	|| (prostorIgranja[x2][(int)ceil(y2)][z2+1].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2+1].pokretan))
+	|| (prostorIgranja[x3][(int)floor(y3)][z3+1].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3+1].pokretan))
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3+1].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3+1].pokretan))
 	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].popunjen 
 	&& (!prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].pokretan))
 	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan))
-	|| Pz<0 || z1<0 || z2<0 || z3<0	)
-		Pz++;
+	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan)))
+		blokNapred=true;
 	else{
+		Pz++;
 		pokretni_deo[2]=z1-1;
 		pokretni_deo[5]=z2-1;
 		pokretni_deo[8]=z3-1;
+		blokNazad=false;
 		}	
 }
 
@@ -1325,23 +1438,24 @@ void translacijaNazad(void){
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];	
 	
-	Pz++;
-	if( (prostorIgranja[x1][(int)floor(y1)][z1+1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1+1].pokretan))
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1+1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1+1].pokretan))
-	|| (prostorIgranja[x2][(int)floor(y2)][z2+1].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2+1].pokretan))
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2+1].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2+1].pokretan))
-	|| (prostorIgranja[x3][(int)floor(y3)][z3+1].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3+1].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3+1].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3+1].pokretan))
+	if(Pz<0 || z1<0 || z2<0 || z3<0 || 
+	(prostorIgranja[x1][(int)floor(y1)][z1-1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1-1].pokretan))
+	|| (prostorIgranja[x1][(int)ceil(y1)][z1-1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1-1].pokretan))
+	|| (prostorIgranja[x2][(int)floor(y2)][z2-1].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2-1].pokretan))
+	|| (prostorIgranja[x2][(int)ceil(y2)][z2-1].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2-1].pokretan))
+	|| (prostorIgranja[x3][(int)floor(y3)][z3-1].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3-1].pokretan))
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3-1].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3-1].pokretan))
 	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].popunjen 
 	&& (!prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].pokretan))
 	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan))
-	|| Pz>=DUZINA || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA	)
-		Pz--;
+	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan)))
+		blokNazad=true;
 	else{
+		Pz--;
 		pokretni_deo[2]=z1+1;
 		pokretni_deo[5]=z2+1;
 		pokretni_deo[8]=z3+1;
+		blokNapred=false;
 		}
 }
 
@@ -1489,15 +1603,6 @@ void oblik_TR(float x,float y,float z)
 	iscrtaj_kocku(x,y,z,0);
 	iscrtaj_kocku(x-1,y,z,0);
 	iscrtaj_kocku(x,y+1,z,0);
-	pokretni_deo[0]=x+1;
-	pokretni_deo[1]=y;
-	pokretni_deo[2]=z;
-	pokretni_deo[3]=x-1;
-	pokretni_deo[4]=y;
-	pokretni_deo[5]=z;
-	pokretni_deo[6]=x;
-	pokretni_deo[7]=y+1;
-	pokretni_deo[8]=z;
 }
 
 void oblik_OR(float x,float y,float z)
@@ -1506,15 +1611,6 @@ void oblik_OR(float x,float y,float z)
 	iscrtaj_kocku(x+1,y,z,1);
 	iscrtaj_kocku(x,y+1,z,1);
 	iscrtaj_kocku(x+1,y+1,z,1);
-	pokretni_deo[0]=x+1;
-	pokretni_deo[1]=y;
-	pokretni_deo[2]=z;
-	pokretni_deo[3]=x;
-	pokretni_deo[4]=y+1;
-	pokretni_deo[5]=z;
-	pokretni_deo[6]=x+1;
-	pokretni_deo[7]=y+1;
-	pokretni_deo[8]=z;
 }
 
 void oblik_IR(float x,float y,float z)
@@ -1523,15 +1619,6 @@ void oblik_IR(float x,float y,float z)
 	iscrtaj_kocku(x,y-1,z,2);
 	iscrtaj_kocku(x,y+1,z,2);
 	iscrtaj_kocku(x,y+2,z,2);
-	pokretni_deo[0]=x;
-	pokretni_deo[1]=y+1;
-	pokretni_deo[2]=z;
-	pokretni_deo[3]=x;
-	pokretni_deo[4]=y-1;
-	pokretni_deo[5]=z;
-	pokretni_deo[6]=x;
-	pokretni_deo[7]=y+2;
-	pokretni_deo[8]=z;
 }
 
 void oblik_LR(float x,float y,float z)
@@ -1540,15 +1627,6 @@ void oblik_LR(float x,float y,float z)
 	iscrtaj_kocku(x,y,z,3);
 	iscrtaj_kocku(x,y+1,z,3);
 	iscrtaj_kocku(x+1,y+1,z,3);
-	pokretni_deo[0]=x;
-	pokretni_deo[1]=y-1;
-	pokretni_deo[2]=z;
-	pokretni_deo[3]=x;
-	pokretni_deo[4]=y+1;
-	pokretni_deo[5]=z;
-	pokretni_deo[6]=x+1;
-	pokretni_deo[7]=y+1;
-	pokretni_deo[8]=z;
 }
 
 void oblik_ZR(float x,float y,float z)
@@ -1557,15 +1635,6 @@ void oblik_ZR(float x,float y,float z)
 	iscrtaj_kocku(x,y+1,z,4);
 	iscrtaj_kocku(x+1,y+1,z,4);
 	iscrtaj_kocku(x-1,y,z,4);
-	pokretni_deo[0]=x;
-	pokretni_deo[1]=y+1;
-	pokretni_deo[2]=z;
-	pokretni_deo[3]=x+1;
-	pokretni_deo[4]=y+1;
-	pokretni_deo[5]=z;
-	pokretni_deo[6]=x-1;
-	pokretni_deo[7]=y;
-	pokretni_deo[8]=z;
 }
 
 void oblik_YR(float x,float y,float z)
@@ -1574,15 +1643,6 @@ void oblik_YR(float x,float y,float z)
 	iscrtaj_kocku(x-1,y,z,5);
 	iscrtaj_kocku(x,y+1,z,5);
 	iscrtaj_kocku(x,y,z-1,5);
-	pokretni_deo[0]=x-1;
-	pokretni_deo[1]=y;
-	pokretni_deo[2]=z;
-	pokretni_deo[3]=x;
-	pokretni_deo[4]=y+1;
-	pokretni_deo[5]=z;
-	pokretni_deo[6]=x;
-	pokretni_deo[7]=y;
-	pokretni_deo[8]=z-1;
 }
 
 void oblik_XR(float x,float y,float z)
@@ -1591,15 +1651,6 @@ void oblik_XR(float x,float y,float z)
 	iscrtaj_kocku(x-1,y,z,6);
 	iscrtaj_kocku(x,y+1,z,6);
 	iscrtaj_kocku(x,y+1,z-1,6);
-	pokretni_deo[0]=x-1;
-	pokretni_deo[1]=y;
-	pokretni_deo[2]=z;
-	pokretni_deo[3]=x;
-	pokretni_deo[4]=y+1;
-	pokretni_deo[5]=z;
-	pokretni_deo[6]=x;
-	pokretni_deo[7]=y+1;
-	pokretni_deo[8]=z-1;
 }
 
 /*
@@ -1630,7 +1681,7 @@ void oblik_XR(float x,float y,float z)
 	glutWireCube(1);	
 	glPopMatrix();
 */
-
+/*
 
 void oblik_T(int x,int y,int z)
 {	
@@ -1659,7 +1710,7 @@ void oblik_T(int x,int y,int z)
 	glutSolidCube(1);	
 	glPopMatrix();
 }
-/*
+
 void oblik_O(int x,int y,int z)
 {
 	glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,Omaterial_diffuse);

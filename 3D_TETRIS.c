@@ -25,6 +25,7 @@ bool popunjen;
 int boja;
 }polje;
 
+//koordinate matrice predstavljaju centar u kome se iscrtava kocka
 polje prostorIgranja[SIRINA][VISINA][DUZINA];
 
 static int window_width,window_height;
@@ -127,8 +128,10 @@ void translacijaDesno();
 void translacijaNapred();
 void translacijaNazad();
 
+//niz u kome cuvamo koordinate pokretnog oblika za ostale 3 kocke po 3 koordinate 
 float pokretni_deo[COORD_CENTR_SIZE];
 
+//niz pokazivaca funkcija na osnovu ostatka pri deljenju pseudo slcajnog broja bira se oblik
 void(*niz_pokazivaca_funkcija[])(float,float,float)=
 	{oblik_TR,
 	oblik_OR,
@@ -194,11 +197,12 @@ static void on_display(void)
 	glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
 	glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
 
+	//deo koda za iscrtavanje 
 	postolje();
 
 	proveri_blokove();
 	iscrtaj_staticni_deo();
-
+	
 	glPushMatrix();
 	
 		glTranslatef(Px,Py-animation_param,Pz);
@@ -333,6 +337,7 @@ static void on_timer(int value)
 				}
 			}
 		else {
+			//azuriramo nove koordinate
 			indikator=false;
 			animation_param = animation_param + brzina_pada;
 			pokretni_deo[1]=pokretni_deo[1]-brzina_pada;
@@ -342,6 +347,8 @@ static void on_timer(int value)
 	}
 	
 	else if(Py-animation_param==0 || pokretni_deo[1]==0 || pokretni_deo[4]==0 || pokretni_deo[7]==0){
+		
+		//ukoliko je oblik pao na postolje postaje statican deo		
 		animation_on=0;
 		int x1=(int)pokretni_deo[0];
 		int y1=(int)pokretni_deo[1];
@@ -389,6 +396,7 @@ int izracunaj_token(){
 	srand(time(NULL));
 	int r=rand()%BROJ_OBLIKA;
 	
+	//biramo sledeci oblik i postavljamo koordinate za ostale 3 kocke u zavisnosti koji oblik je odabran
 	if(r==0)
 		{
 			pokretni_deo[0]=Px+1;
@@ -477,6 +485,8 @@ int izracunaj_token(){
 	return r;
 }
 
+//prilikom svakog poziva funkcije on_display prvo iscrtavamo staticni deo o kome
+//imamo informacije na osnovu matrice prostorIgranja
 void iscrtaj_staticni_deo(void)
 {
 	int i,j,k;
@@ -495,6 +505,7 @@ void iscrtaj_staticni_deo(void)
 
 void proveri_blokove(void){
 int i,j,k;
+//ne proveravamo blokove koje predstavljaju poslednje 3 koordinate u svakoj osi jer ne mogu popuniti 4*4*4
 	for(i=0;i<SIRINA-3;i++)
 	{
 		for(j=0;j<VISINA-3;j++)
@@ -509,6 +520,7 @@ int i,j,k;
 
 void proveri_blok(int i,int j,int k){
 int m,n,l;
+//proveravamo blok 4*4*4 jednoznacno odredjen odredjen pozicijom i,j,k u matrici
 	for(m=i;m<i+4;m++)
 	{
 		for(n=j;n<j+4;n++)
@@ -520,13 +532,14 @@ int m,n,l;
 			}
 		}
 	}
-	
+	//ukoliko je popunjen transliramo sve sto je iznad za 4 kocke na dole 
 	for(m=i;m<i+4;m++)
 	{
 		for(n=j;n<VISINA;n++)
 		{
 			for(l=k;l<k+4;l++)
 			{
+				//ukoliko su u pitanju poslednje 4 kordinate po visini onda postaju prazne
 				if(n < VISINA-4)
 					prostorIgranja[m][n][l].popunjen=prostorIgranja[m][n+4][l].popunjen;
 				else
@@ -565,6 +578,7 @@ void postolje()
 		}
 }
 
+//postavljanje cele matrice na nulu 
 void inicijalizuj_matricu(void)
 {
 	int i,j,k;
@@ -580,7 +594,7 @@ void inicijalizuj_matricu(void)
 	}
 }
 
-//provera ispravnosti rotacije
+//provera ispravnosti rotacija , ima ih 4 , slican princip za sve 4
 
 void rotacijaZlevo(void){
 
@@ -598,6 +612,12 @@ void rotacijaZlevo(void){
 	int z3=(int)pokretni_deo[8];
 	float y4=Py-animation_param;
 	
+	// ideja je ne racunati cos i sin vec
+	// razloziti na 8 slucajeva u zavisnosti od polozaja ostale 3 kocke
+	// na kocku koja predstavlja centar mase celog oblika
+	//one se rotiraju oko nje za ugao od 90 stepeni
+
+	//za prvu kocku
 	if(x1-Px>0)
 	{
 		if((y1-y4) >0){
@@ -648,7 +668,7 @@ void rotacijaZlevo(void){
 		}
 	}
 
-	//za drugu
+	//za drugu kocku
 
 	if(x2-Px>0)
 	{
@@ -700,7 +720,7 @@ void rotacijaZlevo(void){
 		}
 	}
 
-	//za trecu
+	//za trecu kocku
 	
 	if(x3-Px>0)
 	{
@@ -772,7 +792,8 @@ void rotacijaZlevo(void){
 			pokretni_deo[6]=x3;
 			pokretni_deo[7]=y3;
 			pokretni_deo[8]=z3;
-		}		
+		}	
+	//ukoliko je rotacija validna azuriraju se nove kordinate i povecava brojac rotacija	
 }
 
 void rotacijaZdesno(void){
@@ -791,6 +812,7 @@ void rotacijaZdesno(void){
 	int z3=(int)pokretni_deo[8];
 	float y4=Py-animation_param;
 	
+	//za prvu kocku
 	if(x1-Px>0)
 	{
 		if((y1-y4) >0){
@@ -841,7 +863,7 @@ void rotacijaZdesno(void){
 		}
 	}
 
-	//za drugu
+	//za drugu kocku
 
 	if(x2-Px>0)
 	{
@@ -893,7 +915,7 @@ void rotacijaZdesno(void){
 		}
 	}
 
-	//za trecu
+	//za trecu kocku
 
 	if(x3-Px>0)
 	{
@@ -984,6 +1006,7 @@ void rotacijaXdole(void){
 	int z3=(int)pokretni_deo[8];
 	float y4=Py-animation_param;
 
+	//za prvu kocku
 	if(z1-Pz>0)
 	{
 		if((y1-y4) >0){
@@ -1034,7 +1057,7 @@ void rotacijaXdole(void){
 		}
 	}
 
-	//za drugu
+	//za drugu kocku
 
 	if(z2-Pz>0)
 	{
@@ -1086,7 +1109,7 @@ void rotacijaXdole(void){
 		}
 	}
 
-	//za trecu
+	//za trecu kocku
 
 	if(z3-Pz>0)
 	{
@@ -1177,6 +1200,7 @@ void rotacijaXgore(void){
 	int z3=(int)pokretni_deo[8];
 	float y4=Py-animation_param;	
 
+	//za prvu kocku
 	if(z1-Pz>0)
 	{
 		if((y1-y4) >0){
@@ -1227,7 +1251,7 @@ void rotacijaXgore(void){
 		}
 	}
 
-	//za drugu
+	//za drugu kocku
 
 	if(z2-Pz>0)
 	{
@@ -1279,7 +1303,7 @@ void rotacijaXgore(void){
 		}
 	}
 
-	//za trecu
+	//za trecu kocku
 
 	if(z3-Pz>0)
 	{
@@ -1354,6 +1378,7 @@ void rotacijaXgore(void){
 		}
 }
 
+//provera translacija , ima ih 4 , slican princip za sve 4
 void translacijaLevo(void){
 
 	int x1=(int)pokretni_deo[0];
@@ -1367,6 +1392,8 @@ void translacijaLevo(void){
 	int x3=(int)pokretni_deo[6];
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];
+
+	//ukoliko se pokretna kocka nalazi izmedju sve staticne po visini moramo da proverimo za obe
 	
 	if(Px>=SIRINA-1 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 ||
 	(prostorIgranja[x1+1][(int)floor(y1)][z1].popunjen)
@@ -1482,8 +1509,10 @@ void translacijaNazad(void){
 		}
 }
 
+    //funkcije za iscrtavanje oblika
     //funkcije uzimaju za argumente pozicije na kojima se iscrtava oblik
-    //one u sebi pozivaju po cetiri funkcije "iscrtaj kocku" i tako nastaje oblik    
+    //one u sebi pozivaju po cetiri funkcije "iscrtaj kocku" i tako nastaje oblik
+    //najpre na osnovu cetvrtog argumenta saznajemo boju 
 
 void iscrtaj_kocku(float x,float y,float z,int c)
 {

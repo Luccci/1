@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <math.h>
+#include <stdio.h>
 
 #define SIRINA 16
 #define VISINA 16
@@ -15,14 +16,12 @@
 
 //matrica 16*16*16 opisuje trodimenzionalni prostor podeljen na kocke 
 //koje popunjavamo padajucim predmetima koji su takodje sastavljeni od kocki ...
-//potrebne su nam tri informacije:
-//1. da li je polje u matrici popunjeno kockom koja pripada nekom od predmeta 
-//2. da li je ta kocka deo staticnog predmeta ili pada 
-//3. boja kocke
+//potrebne su nam dve informacije:
+//1. da li je polje u matrici popunjeno kockom koja pripada nekom od palih predmeta  
+//2. boja kocke
 
 typedef struct Polje{
 bool popunjen;
-bool pokretan;
 int boja;
 }polje;
 
@@ -31,7 +30,9 @@ polje prostorIgranja[SIRINA][VISINA][DUZINA];
 static int window_width,window_height;
 int animation_on=0;
 float animation_param=0;
-float  brzina_pada=0.01;
+float  brzina_pada_normalno=0.01;
+float brzina_pada_ubrzano=0.1;
+float brzina_pada=0.01;
 int token;              //oznaka pseudo slucajnog oblika
 
 //pozicija improvizovanog centra mase oblika koji pada
@@ -39,16 +40,10 @@ int token;              //oznaka pseudo slucajnog oblika
 int Px=CENTAR;
 int Py=VISINA-1;
 int Pz=CENTAR;
-
 //broj rotacija oko Z i X osa
 
 int brZ=0;
 int brX=0;
-
-bool blokNapred=false;
-bool blokNazad=false;
-bool blokLevo=false;
-bool blokDesno=false;
 
 //boje za svaki oblik
 
@@ -267,28 +262,28 @@ static void on_keyboard(unsigned char key,int x,int y)
 				rotacijaXgore();}
 			break;
 		case 'j':
-			if(!blokLevo && animation_on){
+			if(animation_on){
 				translacijaLevo();
 				}
 			break;
 		case 'i':
-			if(!blokNapred && animation_on){
+			if(animation_on){
 				translacijaNapred();
 				}
 			break;
 		case 'l':
-			if(!blokDesno && animation_on){
+			if(animation_on){
 				translacijaDesno();
 				}
 			break;
 		case 'k':
-			if(!blokNazad && animation_on){
+			if(animation_on){
 				translacijaNazad();
 				}
 			break;
 		case 'f':
 			if(animation_on)
-				brzina_pada=0.1;
+				brzina_pada=brzina_pada_ubrzano;
 			break;
 		//esc	    	
 		case 27:
@@ -303,9 +298,9 @@ static void on_timer(int value)
 		return ;
 		
 	bool indikator;
-	if(Py-animation_param>0 && pokretni_deo[1]>0 && pokretni_deo[4]>0 && pokretni_deo[7]>0){
-
-		if((Py-animation_param)-floor((Py-animation_param))==0 && animation_param!=0)
+	if(Py-animation_param>0 && pokretni_deo[1]>0 && pokretni_deo[4]>0 && pokretni_deo[7]>0)	
+	{		
+		if(((Py-animation_param)-((int)(Py-animation_param)))==0 && (animation_param!=0))
 			{
 				animation_on=0;
 				int x1=(int)pokretni_deo[0];
@@ -321,23 +316,18 @@ static void on_timer(int value)
 				int z3=(int)pokretni_deo[8];
 				int y4=(int)(Py-animation_param);
 				
-				if((prostorIgranja[x1][y1-1][z1].popunjen && (!prostorIgranja[x1][y1-1][z1].pokretan))
-				|| (prostorIgranja[x2][y2-1][z2].popunjen && (!prostorIgranja[x2][y2-1][z2].pokretan))
-				|| (prostorIgranja[x3][y3-1][z3].popunjen && (!prostorIgranja[x3][y3-1][z3].pokretan))
-				|| (prostorIgranja[Px][y4-1][Pz].popunjen 
-				&& (!prostorIgranja[Px][y4-1][Pz].pokretan)))
+				if((prostorIgranja[x1][y1-1][z1].popunjen)
+				|| (prostorIgranja[x2][y2-1][z2].popunjen)
+				|| (prostorIgranja[x3][y3-1][z3].popunjen)
+				|| (prostorIgranja[Px][y4-1][Pz].popunjen))
 				{
 					prostorIgranja[x1][y1][z1].popunjen=true;
-					prostorIgranja[x1][y1][z1].pokretan=false;
 					prostorIgranja[x1][y1][z1].boja=token;
 					prostorIgranja[x2][y2][z2].popunjen=true;
-					prostorIgranja[x2][y2][z2].pokretan=false;
 					prostorIgranja[x1][y2][z1].boja=token;
 					prostorIgranja[x3][y3][z3].popunjen=true;
-					prostorIgranja[x3][y3][z3].pokretan=false;
 					prostorIgranja[x1][y3][z1].boja=token;
 					prostorIgranja[Px][y4][Pz].popunjen=true;
-					prostorIgranja[Px][y4][Pz].pokretan=false;
 					prostorIgranja[Px][y4][Pz].boja=token;
 					indikator=true;								
 				}
@@ -350,7 +340,8 @@ static void on_timer(int value)
 			pokretni_deo[7]=pokretni_deo[7]-brzina_pada;
 			}
 	}
-	else{
+	
+	else if(Py-animation_param==0 || pokretni_deo[1]==0 || pokretni_deo[4]==0 || pokretni_deo[7]==0){
 		animation_on=0;
 		int x1=(int)pokretni_deo[0];
 		int y1=(int)pokretni_deo[1];
@@ -366,27 +357,25 @@ static void on_timer(int value)
 		int y4=(int)(Py-animation_param);		
 
 		prostorIgranja[x1][y1][z1].popunjen=true;
-		prostorIgranja[x1][y1][z1].pokretan=false;
 		prostorIgranja[x1][y1][z1].boja=token;
 		prostorIgranja[x2][y2][z2].popunjen=true;
-		prostorIgranja[x2][y2][z2].pokretan=false;
 		prostorIgranja[x1][y2][z1].boja=token;
 		prostorIgranja[x3][y3][z3].popunjen=true;
-		prostorIgranja[x3][y3][z3].pokretan=false;
 		prostorIgranja[x1][y3][z1].boja=token;
 		prostorIgranja[Px][y4][Pz].popunjen=true;
-		prostorIgranja[Px][y4][Pz].pokretan=false;
 		prostorIgranja[Px][y4][Pz].boja=token;
 		indikator=true;		
 	}
-	
+		
 	glutPostRedisplay();
 	
 	if(indikator){
 		animation_param=0;
-		brzina_pada=0.01;
+		brzina_pada=brzina_pada_normalno;
 		Px=CENTAR;
 		Pz=CENTAR;
+		brX=0;
+		brZ=0;
 		token=izracunaj_token();
 		animation_on=1;
 		}	
@@ -497,8 +486,7 @@ void iscrtaj_staticni_deo(void)
 		{
 			for(k=0;k<DUZINA;k++)
 			{
-				if(prostorIgranja[i][j][k].popunjen==true 
-			   	&& prostorIgranja[i][j][k].pokretan==false)
+				if(prostorIgranja[i][j][k].popunjen==true)
 					iscrtaj_kocku( i, j, k, prostorIgranja[i][j][k].boja);	
 			}
 		}
@@ -587,7 +575,6 @@ void inicijalizuj_matricu(void)
 			for(k=0;k<DUZINA;k++)
 			{
 				prostorIgranja[i][j][k].popunjen=false;
-				prostorIgranja[i][j][k].pokretan=false;
 			}
 		}
 	}
@@ -765,15 +752,27 @@ void rotacijaZlevo(void){
 		}
 	}
 
-	brZ++;
-	if(x1<0 || x2<0 || x3<0 || y1<0 || y2<0 || y3<0 || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA || 
-	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1].pokretan))
-	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2].pokretan))
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2].pokretan))
-	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan)))	
-		brZ--;		
+	if(x1<=0 || x2<=0 || x3<=0 || y1<=0 || y2<=0 || y3<=0 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 || 
+	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen)
+	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen)
+	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen)
+	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen)
+	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen)
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen))	
+		return;
+	else
+		{
+			brZ++;
+			pokretni_deo[0]=x1;
+			pokretni_deo[1]=y1;
+			pokretni_deo[2]=z1;
+			pokretni_deo[3]=x2;
+			pokretni_deo[4]=y2;
+			pokretni_deo[5]=z2;
+			pokretni_deo[6]=x3;
+			pokretni_deo[7]=y3;
+			pokretni_deo[8]=z3;
+		}		
 }
 
 void rotacijaZdesno(void){
@@ -946,15 +945,27 @@ void rotacijaZdesno(void){
 		}
 	}
 
-	brZ--;
-	if( x1<0 || x2<0 || x3<0 || y1<0 || y2<0 || y3<0 || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA ||
-	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1].pokretan))
-	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2].pokretan))
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2].pokretan))
-	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan)))	
-		brZ++;
+	if( x1<=0 || x2<=0 || x3<=0 || y1<=0 || y2<=0 || y3<=0 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 ||
+	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen)
+	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen)
+	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen)
+	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen)
+	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen)
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen))	
+		return;
+	else
+		{
+			brZ--;
+			pokretni_deo[0]=x1;
+			pokretni_deo[1]=y1;
+			pokretni_deo[2]=z1;
+			pokretni_deo[3]=x2;
+			pokretni_deo[4]=y2;
+			pokretni_deo[5]=z2;
+			pokretni_deo[6]=x3;
+			pokretni_deo[7]=y3;
+			pokretni_deo[8]=z3;
+		}
 }
 
 void rotacijaXdole(void){
@@ -1127,15 +1138,27 @@ void rotacijaXdole(void){
 		}
 	}
 
-	brX--;
-	if( z1<0 || z2<0 || z3<0 || y1<0 || y2<0 || y3<0 || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA ||
-	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1].pokretan))
-	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2].pokretan))
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2].pokretan))
-	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan)))	
-		brX++;
+	if( z1<=0 || z2<=0 || z3<=0 || y1<=0 || y2<=0 || y3<=0 || z1>=DUZINA-1 || z2>=DUZINA-1 || z3>=DUZINA-1 ||
+	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen)
+	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen)
+	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen)
+	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen)
+	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen)
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen))	
+		return;
+	else
+		{
+			brX--;
+			pokretni_deo[0]=x1;
+			pokretni_deo[1]=y1;
+			pokretni_deo[2]=z1;
+			pokretni_deo[3]=x2;
+			pokretni_deo[4]=y2;
+			pokretni_deo[5]=z2;
+			pokretni_deo[6]=x3;
+			pokretni_deo[7]=y3;
+			pokretni_deo[8]=z3;
+		}
 }
 
 void rotacijaXgore(void){
@@ -1308,15 +1331,27 @@ void rotacijaXgore(void){
 		}
 	}
 	
-	brX++;
-	if(z1<0 || z2<0 || z3<0	|| y1<0 || y2<0 || y3<0 || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA ||
-	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1].pokretan))
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1].pokretan))
-	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2].pokretan))
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2].pokretan))
-	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3].pokretan)))	
-		brX--;
+	if(z1<=0 || z2<=0 || z3<=0 || y1<=0 || y2<=0 || y3<=0 || z1>=DUZINA-1 || z2>=DUZINA-1 || z3>=DUZINA-1 ||
+	(prostorIgranja[x1][(int)floor(y1)][z1].popunjen)
+	|| (prostorIgranja[x1][(int)ceil(y1)][z1].popunjen)
+	|| (prostorIgranja[x2][(int)floor(y2)][z2].popunjen)
+	|| (prostorIgranja[x2][(int)ceil(y2)][z2].popunjen)
+	|| (prostorIgranja[x3][(int)floor(y3)][z3].popunjen)
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3].popunjen))	
+		return;
+	else
+		{
+			brX++;
+			pokretni_deo[0]=x1;
+			pokretni_deo[1]=y1;
+			pokretni_deo[2]=z1;
+			pokretni_deo[3]=x2;
+			pokretni_deo[4]=y2;
+			pokretni_deo[5]=z2;
+			pokretni_deo[6]=x3;
+			pokretni_deo[7]=y3;
+			pokretni_deo[8]=z3;
+		}
 }
 
 void translacijaLevo(void){
@@ -1333,24 +1368,21 @@ void translacijaLevo(void){
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];
 	
-	if(Px>=SIRINA || x1>=SIRINA || x2>=SIRINA || x3>=SIRINA ||
-	(prostorIgranja[x1+1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1+1][(int)floor(y1)][z1].pokretan))
-	|| (prostorIgranja[x1+1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1+1][(int)ceil(y1)][z1].pokretan))
-	|| (prostorIgranja[x2+1][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2+1][(int)floor(y2)][z2].pokretan))
-	|| (prostorIgranja[x2+1][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2+1][(int)ceil(y2)][z2].pokretan))
-	|| (prostorIgranja[x3+1][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3+1][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3+1][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3+1][(int)ceil(y3)][z3].pokretan))
-	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].pokretan))
-	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan)))
-		blokLevo=true;
+	if(Px>=SIRINA-1 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 ||
+	(prostorIgranja[x1+1][(int)floor(y1)][z1].popunjen)
+	|| (prostorIgranja[x1+1][(int)ceil(y1)][z1].popunjen)
+	|| (prostorIgranja[x2+1][(int)floor(y2)][z2].popunjen)
+	|| (prostorIgranja[x2+1][(int)ceil(y2)][z2].popunjen)
+	|| (prostorIgranja[x3+1][(int)floor(y3)][z3].popunjen)
+	|| (prostorIgranja[x3+1][(int)ceil(y3)][z3].popunjen)
+	|| (prostorIgranja[Px+1][(int)floor(Py-animation_param)][Pz].popunjen)
+	|| (prostorIgranja[Px+1][(int)ceil(Py-animation_param)][Pz].popunjen))
+		return;
 	else{
 		Px++;
-		pokretni_deo[0]=x1-1;
-		pokretni_deo[3]=x2-1;
-		pokretni_deo[6]=x3-1;
-		blokDesno=false;
+		pokretni_deo[0]=x1+1;
+		pokretni_deo[3]=x2+1;
+		pokretni_deo[6]=x3+1;
 		}
 }
 
@@ -1368,24 +1400,21 @@ void translacijaDesno(void){
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];	
 		
-	if(Px<0 || x1<0 || x2<0 || x3<0 ||
-	(prostorIgranja[x1-1][(int)floor(y1)][z1].popunjen && (!prostorIgranja[x1-1][(int)floor(y1)][z1].pokretan))
-	|| (prostorIgranja[x1-1][(int)ceil(y1)][z1].popunjen && (!prostorIgranja[x1-1][(int)ceil(y1)][z1].pokretan))
-	|| (prostorIgranja[x2-1][(int)floor(y2)][z2].popunjen && (!prostorIgranja[x2-1][(int)floor(y2)][z2].pokretan))
-	|| (prostorIgranja[x2-1][(int)ceil(y2)][z2].popunjen && (!prostorIgranja[x2-1][(int)ceil(y2)][z2].pokretan))
-	|| (prostorIgranja[x3-1][(int)floor(y3)][z3].popunjen && (!prostorIgranja[x3-1][(int)floor(y3)][z3].pokretan))
-	|| (prostorIgranja[x3-1][(int)ceil(y3)][z3].popunjen && (!prostorIgranja[x3-1][(int)ceil(y3)][z3].pokretan))
-	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].pokretan))
-	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan)))
-		blokDesno=true;
+	if(Px<=0 || x1<=0 || x2<=0 || x3<=0 ||
+	(prostorIgranja[x1-1][(int)floor(y1)][z1].popunjen)
+	|| (prostorIgranja[x1-1][(int)ceil(y1)][z1].popunjen)
+	|| (prostorIgranja[x2-1][(int)floor(y2)][z2].popunjen)
+	|| (prostorIgranja[x2-1][(int)ceil(y2)][z2].popunjen)
+	|| (prostorIgranja[x3-1][(int)floor(y3)][z3].popunjen)
+	|| (prostorIgranja[x3-1][(int)ceil(y3)][z3].popunjen)
+	|| (prostorIgranja[Px-1][(int)floor(Py-animation_param)][Pz].popunjen)
+	|| (prostorIgranja[Px-1][(int)ceil(Py-animation_param)][Pz].popunjen))
+		return;
 	else{
 		Px--;
-		pokretni_deo[0]=x1+1;
-		pokretni_deo[3]=x2+1;
-		pokretni_deo[6]=x3+1;
-		blokLevo=false;
+		pokretni_deo[0]=x1-1;
+		pokretni_deo[3]=x2-1;
+		pokretni_deo[6]=x3-1;
 		}	
 }
 	
@@ -1403,24 +1432,21 @@ void translacijaNapred(void){
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];	
 	
-	if(Pz>=DUZINA || z1>=DUZINA || z2>=DUZINA || z3>=DUZINA ||
-	 (prostorIgranja[x1][(int)floor(y1)][z1+1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1+1].pokretan))
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1+1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1+1].pokretan))
-	|| (prostorIgranja[x2][(int)floor(y2)][z2+1].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2+1].pokretan))
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2+1].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2+1].pokretan))
-	|| (prostorIgranja[x3][(int)floor(y3)][z3+1].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3+1].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3+1].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3+1].pokretan))
-	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].pokretan))
-	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan)))
-		blokNapred=true;
+	if(Pz>=DUZINA-1 || z1>=DUZINA-1 || z2>=DUZINA-1 || z3>=DUZINA-1 ||
+	 (prostorIgranja[x1][(int)floor(y1)][z1+1].popunjen)
+	|| (prostorIgranja[x1][(int)ceil(y1)][z1+1].popunjen)
+	|| (prostorIgranja[x2][(int)floor(y2)][z2+1].popunjen)
+	|| (prostorIgranja[x2][(int)ceil(y2)][z2+1].popunjen)
+	|| (prostorIgranja[x3][(int)floor(y3)][z3+1].popunjen)
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3+1].popunjen)
+	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz+1].popunjen)
+	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz+1].popunjen))
+		return;
 	else{
 		Pz++;
-		pokretni_deo[2]=z1-1;
-		pokretni_deo[5]=z2-1;
-		pokretni_deo[8]=z3-1;
-		blokNazad=false;
+		pokretni_deo[2]=z1+1;
+		pokretni_deo[5]=z2+1;
+		pokretni_deo[8]=z3+1;
 		}	
 }
 
@@ -1438,24 +1464,21 @@ void translacijaNazad(void){
 	float y3=pokretni_deo[7];
 	int z3=(int)pokretni_deo[8];	
 	
-	if(Pz<0 || z1<0 || z2<0 || z3<0 || 
-	(prostorIgranja[x1][(int)floor(y1)][z1-1].popunjen && (!prostorIgranja[x1][(int)floor(y1)][z1-1].pokretan))
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1-1].popunjen && (!prostorIgranja[x1][(int)ceil(y1)][z1-1].pokretan))
-	|| (prostorIgranja[x2][(int)floor(y2)][z2-1].popunjen && (!prostorIgranja[x2][(int)floor(y2)][z2-1].pokretan))
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2-1].popunjen && (!prostorIgranja[x2][(int)ceil(y2)][z2-1].pokretan))
-	|| (prostorIgranja[x3][(int)floor(y3)][z3-1].popunjen && (!prostorIgranja[x3][(int)floor(y3)][z3-1].pokretan))
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3-1].popunjen && (!prostorIgranja[x3][(int)ceil(y3)][z3-1].pokretan))
-	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)floor(Py-animation_param)][Pz].pokretan))
-	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].popunjen 
-	&& (!prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz].pokretan)))
-		blokNazad=true;
+	if(Pz<=0 || z1<=0 || z2<=0 || z3<=0 || 
+	(prostorIgranja[x1][(int)floor(y1)][z1-1].popunjen)
+	|| (prostorIgranja[x1][(int)ceil(y1)][z1-1].popunjen)
+	|| (prostorIgranja[x2][(int)floor(y2)][z2-1].popunjen)
+	|| (prostorIgranja[x2][(int)ceil(y2)][z2-1].popunjen)
+	|| (prostorIgranja[x3][(int)floor(y3)][z3-1].popunjen)
+	|| (prostorIgranja[x3][(int)ceil(y3)][z3-1].popunjen)
+	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz-1].popunjen)
+	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz-1].popunjen))
+		return;
 	else{
 		Pz--;
-		pokretni_deo[2]=z1+1;
-		pokretni_deo[5]=z2+1;
-		pokretni_deo[8]=z3+1;
-		blokNapred=false;
+		pokretni_deo[2]=z1-1;
+		pokretni_deo[5]=z2-1;
+		pokretni_deo[8]=z3-1;
 		}
 }
 

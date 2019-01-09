@@ -197,11 +197,16 @@ static void on_display(void)
 	
 	glPushMatrix();
 	
+	// brojaci brZ i brX pamte ukupan broj rotacija
+	// u oba smera oko Z i oko X ose
+
 		glTranslatef(Px,Py-animation_param,Pz);
 		glRotatef( brZ *90 , 0, 0, -1);
 		glRotatef( brX *90 , 1, 0, 0);
 		glTranslatef(-Px,-Py+animation_param,-Pz);
 	
+	//generisani oblik koji trenutno pada
+
 		(*niz_pokazivaca_funkcija[token])(Px,Py-animation_param,Pz);
 	
 	glPopMatrix();	
@@ -515,7 +520,7 @@ void iscrtaj_staticni_deo(void)
 
 void proveri_blokove(void){
 int i,j,k;
-//ne proveravamo blokove koje predstavljaju poslednje 3 koordinate u svakoj osi jer ne mogu popuniti 4*4*4
+//ne proveravamo blokove koje predstavljaju poslednje 2 koordinate u svakoj osi jer ne mogu popuniti 3*3*3
 	for(i=0;i<SIRINA-2;i++)
 	{
 		for(j=0;j<VISINA-2;j++)
@@ -783,6 +788,9 @@ void rotacijaZlevo(void){
 			x3=Px+p1-y4;
 		}
 	}
+	
+	//proveravamo da li se prilikom rotacije oblik ne sudara sa drugim kockama
+	// i da li izlazi iz prostora
 
 	if(x1<=0 || x2<=0 || x3<=0 || y1<=0 || y2<=0 || y3<=0 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 || 
 	(prostorIgranja[x1][y1][z1].popunjen)
@@ -1393,7 +1401,7 @@ void translacijaLevo(void){
 	int y3=pokretni_deo[7];
 	int z3=pokretni_deo[8];
 
-	//ukoliko se pokretna kocka nalazi izmedju sve staticne po visini moramo da proverimo za obe
+	//proveravamo da li je moguce translirati oblik
 	
 	if(Px>=SIRINA-1 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 
 	||(prostorIgranja[x1+1][y1][z1].popunjen)

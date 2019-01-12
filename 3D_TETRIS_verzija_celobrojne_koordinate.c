@@ -250,6 +250,7 @@ static void on_keyboard(unsigned char key,int x,int y)
 			token=izracunaj_token();
 			iscrtaj_staticni_deo();
 			(*niz_pokazivaca_funkcija[token])(Px,Py-animation_param,Pz);
+			glutPostRedisplay();
 			break;
 		case 'a':
 			if(animation_on){
@@ -288,7 +289,7 @@ static void on_keyboard(unsigned char key,int x,int y)
 				}
 			break;
 		case 'f':
-			if(animation_on)
+			if(animation_on && !brzina_pada_ubrzano)
 				brzina_pada_ubrzano=true;
 			break;
 		//esc	    	
@@ -379,7 +380,7 @@ static void on_timer(int value)
 		}
 		
 		glutPostRedisplay();
-	
+
 		if(indikator){
 			animation_param=0;
 			brzina_pada_ubrzano=false;
@@ -401,15 +402,19 @@ static void on_timer(int value)
 			}
 		}
 	
-			if(animation_on){
-				glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
-			}
+		if(animation_on){
+			glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
+		}
 	}
+	else {
+		printf("Osvojili ste :%ld kraj!",brojPoena);
+		animation_on=0;
+		}
 }
 
 int izracunaj_token(){
-	srand(time(NULL));
-	int r=rand()%BROJ_OBLIKA;
+	//srand(time(NULL));(RAND_MAX/rand())
+	int r=(time(NULL)%10)%BROJ_OBLIKA;
 	
 	//biramo sledeci oblik i postavljamo koordinate za ostale 3 kocke u zavisnosti koji oblik je odabran
 	if(r==0)
@@ -438,14 +443,14 @@ int izracunaj_token(){
 		}
 	else if(r==2)
 		{
-			pokretni_deo[0]=Px;
-			pokretni_deo[1]=Py+1;
+			pokretni_deo[0]=Px+1;
+			pokretni_deo[1]=Py;
 			pokretni_deo[2]=Pz;
-			pokretni_deo[3]=Px;
-			pokretni_deo[4]=Py-1;
+			pokretni_deo[3]=Px+2;
+			pokretni_deo[4]=Py;
 			pokretni_deo[5]=Pz;
-			pokretni_deo[6]=Px;
-			pokretni_deo[7]=Py+2;
+			pokretni_deo[6]=Px-1;
+			pokretni_deo[7]=Py;
 			pokretni_deo[8]=Pz;
 		}
 	else if(r==3)
@@ -1660,9 +1665,9 @@ void oblik_OR(int x,int y,int z)
 void oblik_IR(int x,int y,int z)
 {
 	iscrtaj_kocku(x,y,z,2);
-	iscrtaj_kocku(x,y-1,z,2);
-	iscrtaj_kocku(x,y+1,z,2);
-	iscrtaj_kocku(x,y+2,z,2);
+	iscrtaj_kocku(x+1,y,z,2);
+	iscrtaj_kocku(x+2,y,z,2);
+	iscrtaj_kocku(x-1,y,z,2);
 }
 
 void oblik_LR(int x,int y,int z)

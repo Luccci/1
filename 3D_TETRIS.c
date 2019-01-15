@@ -8,7 +8,6 @@
 #define SIRINA 12
 #define VISINA 15
 #define DUZINA 12
-#define VISINA_POCETKA_PADA 13
 #define CENTAR 5
 #define TIMER_INTERVAL 10
 #define TIMER_ID 0
@@ -37,14 +36,15 @@ float animation_param=0;
 float  brzina_pada_normalno=0.01;
 float brzina_pada_ubrzano=0.1;
 float brzina_pada=0.01;
-int brTimer=1;
+int brTimer=100;
 int brTimerFast=10;
 int brTimerCheck=100;
+long int brojPoena=0;
 int token;              //oznaka pseudo slucajnog oblika
 
 //pozicija improvizovanog centra mase oblika koji pada
 int Px=CENTAR;
-int Py=VISINA_POCETKA_PADA;
+int Py=VISINA-1;
 int Pz=CENTAR;
 
 //broj rotacija oko Z i X osa
@@ -105,7 +105,8 @@ void iscrtaj_staticni_deo();
 void proveri_blokove();
 void proveri_blok(int i,int j,int k);
 void provera_kraja();
-
+void iscrtaj_kocku(float x,float y,float z,int c);
+/*
 void oblik_TR(float x,float y,float z);
 void oblik_OR(float x,float y,float z);
 void oblik_IR(float x,float y,float z);
@@ -113,7 +114,7 @@ void oblik_LR(float x,float y,float z);
 void oblik_ZR(float x,float y,float z);
 void oblik_YR(float x,float y,float z);
 void oblik_XR(float x,float y,float z);
-void iscrtaj_kocku(float x,float y,float z,int c);
+*/
 
 void rotacijaZlevo();
 void rotacijaZdesno();
@@ -129,7 +130,7 @@ void translacijaNazad();
 float pokretni_deo[COORD_CENTR_SIZE];
 
 //niz pokazivaca funkcija na osnovu ostatka pri deljenju pseudo slcajnog broja bira se oblik
-void(*niz_pokazivaca_funkcija[])(float,float,float)=
+/*void(*niz_pokazivaca_funkcija[])(float,float,float)=
 	{oblik_TR,
 	oblik_OR,
 	oblik_IR,
@@ -137,7 +138,7 @@ void(*niz_pokazivaca_funkcija[])(float,float,float)=
 	oblik_ZR,
 	oblik_YR,
 	oblik_XR};
-
+*/
 int main(int argc, char **argv)
 {
 	glutInit(&argc,argv);
@@ -199,8 +200,12 @@ static void on_display(void)
 
 	proveri_blokove();
 	iscrtaj_staticni_deo();
-	
-	glPushMatrix();
+
+	iscrtaj_kocku(pokretni_deo[0],pokretni_deo[1],pokretni_deo[2],token);
+	iscrtaj_kocku(pokretni_deo[3],pokretni_deo[4],pokretni_deo[5],token);
+	iscrtaj_kocku(pokretni_deo[6],pokretni_deo[7],pokretni_deo[8],token);
+	iscrtaj_kocku(Px,Py-animation_param,Pz,token);
+/*	glPushMatrix();
 	
 		glTranslatef(Px,Py-animation_param,Pz);
 		glRotatef( brZ *90 , 0, 0, -1);
@@ -210,7 +215,7 @@ static void on_display(void)
 		(*niz_pokazivaca_funkcija[token])(Px,Py-animation_param,Pz);
 	
 	glPopMatrix();	
-
+*/
 	glutSwapBuffers();
 	}
 
@@ -243,6 +248,7 @@ static void on_keyboard(unsigned char key,int x,int y)
 			animation_on=0;
 			animation_param=0;
 			kraj=false;
+			brojPoena=0;
 			token=izracunaj_token();
 			inicijalizuj_matricu();
 			glutPostRedisplay();
@@ -283,10 +289,12 @@ static void on_keyboard(unsigned char key,int x,int y)
 				translacijaNazad();
 				}
 			break;
-		case 'f':
-			if(animation_on)
+	/*	case 'f':
+			if(animation_on){
 				brzo=true;
-			break;
+				brzina_pada=brzina_pada_ubrzano;
+				brTimer=brTimer+(10-brTimer%10);}
+			break;*/
 		//esc	    	
 		case 27:
 			exit(EXIT_SUCCESS);
@@ -298,112 +306,109 @@ static void on_timer(int value)
 {
 	if(value!=TIMER_ID)
 		return ;
-
-	float centarY=Py-animation_param;
-	
-	int x1=(int)pokretni_deo[0];
-	int y1=(int)pokretni_deo[1];
-	int z1=(int)pokretni_deo[2];
-	
-	int x2=(int)pokretni_deo[3];
-	int y2=(int)pokretni_deo[4];
-	int z2=(int)pokretni_deo[5];	
-
-	int x3=(int)pokretni_deo[6];
-	int y3=(int)pokretni_deo[7];
-	int z3=(int)pokretni_deo[8];
-	int y4=(int)(centarY);
-	printf("\n%d %d %d",y1,y2,y3);		
-
-	/*else if(brzo){
-			//azuriramo nove koordinate
-			brTimer=brTimer+brTimerFast;
-			brzina_pada=brzina_pada_ubrzano;
-			animation_param = animation_param + brzina_pada;
-			pokretni_deo[1]=pokretni_deo[1]-brzina_pada;
-			pokretni_deo[4]=pokretni_deo[4]-brzina_pada;
-			pokretni_deo[7]=pokretni_deo[7]-brzina_pada;
-			}*/
-
-	bool indikator=false;
-	if( y1>0 && y2>0 && y3>0 && y4>0)
-	{	
-		if( (brTimer % brTimerCheck) == 0 )
-			{	
-				if(prostorIgranja[x1][y1-1][z1].popunjen
-				|| prostorIgranja[x2][y2-1][z2].popunjen
-				|| prostorIgranja[x3][y3-1][z3].popunjen
-				|| prostorIgranja[Px][y4-1][Pz].popunjen)
-				{
-					prostorIgranja[x1][y1][z1].popunjen=true;
-					prostorIgranja[x1][y1][z1].boja=token;
-					prostorIgranja[x2][y2][z2].popunjen=true;
-					prostorIgranja[x1][y2][z1].boja=token;
-					prostorIgranja[x3][y3][z3].popunjen=true;
-					prostorIgranja[x1][y3][z1].boja=token;
-					prostorIgranja[Px][y4][Pz].popunjen=true;
-					prostorIgranja[Px][y4][Pz].boja=token;
-					indikator=true;
-					brTimer=1;								
-				}
-				else
-					brTimer++;
-			}
-		else
-			{
-			animation_param = animation_param + brzina_pada;
-			pokretni_deo[1]=pokretni_deo[1]-brzina_pada;
-			pokretni_deo[4]=pokretni_deo[4]-brzina_pada;
-			pokretni_deo[7]=pokretni_deo[7]-brzina_pada;
-			brTimer++;
-			}
-	}
-	
-	else if((y1==0 || y2==0 || y3==0 || y4==0))
+	if(!kraj)
 	{
-		//ukoliko je oblik pao na postolje postaje statican deo			
-		prostorIgranja[x1][y1][z1].popunjen=true;
-		prostorIgranja[x1][y1][z1].boja=token;
-		prostorIgranja[x2][y2][z2].popunjen=true;
-		prostorIgranja[x1][y2][z1].boja=token;
-		prostorIgranja[x3][y3][z3].popunjen=true;
-		prostorIgranja[x1][y3][z1].boja=token;
-		prostorIgranja[Px][y4][Pz].popunjen=true;
-		prostorIgranja[Px][y4][Pz].boja=token;
-		indikator=true;
-		brTimer=1;		
-	}
+		float centarY=Py-animation_param;
 	
-	glutPostRedisplay();
+		int x1=(int)pokretni_deo[0];
+		int y1=(int)pokretni_deo[1];
+		int z1=(int)pokretni_deo[2];
 	
-	provera_kraja();
-	if(kraj)
-		animation_on=0;	
+		int x2=(int)pokretni_deo[3];
+		int y2=(int)pokretni_deo[4];
+		int z2=(int)pokretni_deo[5];	
+
+		int x3=(int)pokretni_deo[6];
+		int y3=(int)pokretni_deo[7];
+		int z3=(int)pokretni_deo[8];
+		int y4=(int)(centarY);		
+
+		bool indikator=false;
+		if( y1>0 && y2>0 && y3>0 && y4>0)
+		{	
+			if( (brTimer % brTimerCheck) == 0 )
+				{	
+					if(prostorIgranja[x1][y1-1][z1].popunjen
+					|| prostorIgranja[x2][y2-1][z2].popunjen
+					|| prostorIgranja[x3][y3-1][z3].popunjen
+					|| prostorIgranja[Px][y4-1][Pz].popunjen)
+					{
+						prostorIgranja[x1][y1][z1].popunjen=true;
+						prostorIgranja[x1][y1][z1].boja=token;
+						prostorIgranja[x2][y2][z2].popunjen=true;
+						prostorIgranja[x1][y2][z1].boja=token;
+						prostorIgranja[x3][y3][z3].popunjen=true;
+						prostorIgranja[x1][y3][z1].boja=token;
+						prostorIgranja[Px][y4][Pz].popunjen=true;
+						prostorIgranja[Px][y4][Pz].boja=token;
+						indikator=true;								
+					}
+					else
+						brTimer++;
+				}
+			/*else if(brzo)
+				{
+				animation_param = animation_param + brzina_pada;
+				pokretni_deo[1]=pokretni_deo[1]-brzina_pada;
+				pokretni_deo[4]=pokretni_deo[4]-brzina_pada;
+				pokretni_deo[7]=pokretni_deo[7]-brzina_pada;
+				brTimer=brTimer+brTimerFast;
+				}*/
+			else
+				{
+				animation_param = animation_param + brzina_pada;
+				pokretni_deo[1]=pokretni_deo[1]-brzina_pada;
+				pokretni_deo[4]=pokretni_deo[4]-brzina_pada;
+				pokretni_deo[7]=pokretni_deo[7]-brzina_pada;
+				brTimer++;
+				}
+		}
+
+		else if((y1==0 || y2==0 || y3==0 || y4==0))
+		{
+			//ukoliko je oblik pao na postolje postaje statican deo			
+			prostorIgranja[x1][y1][z1].popunjen=true;
+			prostorIgranja[x1][y1][z1].boja=token;
+			prostorIgranja[x2][y2][z2].popunjen=true;
+			prostorIgranja[x1][y2][z1].boja=token;
+			prostorIgranja[x3][y3][z3].popunjen=true;
+			prostorIgranja[x1][y3][z1].boja=token;
+			prostorIgranja[Px][y4][Pz].popunjen=true;
+			prostorIgranja[Px][y4][Pz].boja=token;
+			indikator=true;		
+		}
 	
-	if(indikator){
-		animation_param=0;
-		brzina_pada=brzina_pada_normalno;
-		Px=CENTAR;
-		Pz=CENTAR;
-		brX=0;
-		brZ=0;
-		brzo=false;
-		token=izracunaj_token();
-		animation_on=1;
-		}	
+		glutPostRedisplay();	
 	
-	if(animation_on){
-		glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
-	}
+		if(indikator){
+			animation_param=0;
+			brTimer=1;
+			brzina_pada=brzina_pada_normalno;
+			Px=CENTAR;
+			Pz=CENTAR;
+			brX=0;
+			brZ=0;
+			brzo=false;
+			token=izracunaj_token();
+			animation_on=1;
+			}
+		
+		provera_kraja();	
+	
+		if(animation_on){
+			glutTimerFunc(TIMER_INTERVAL,on_timer,TIMER_ID);
+		}
+	}	
 }
 
 int izracunaj_token(){
-	srand(time(NULL));
-	int r=rand()%BROJ_OBLIKA;
+	
+	int r=(time(NULL)%10)%BROJ_OBLIKA;
 	
 	//biramo sledeci oblik i postavljamo koordinate za ostale 3 kocke u zavisnosti koji oblik je odabran
 	if(r==0)
 		{
+			Py=13;
 			pokretni_deo[0]=Px+1;
 			pokretni_deo[1]=Py;
 			pokretni_deo[2]=Pz;
@@ -416,6 +421,7 @@ int izracunaj_token(){
 		}
 	else if(r==1)
 		{
+			Py=13;
 			pokretni_deo[0]=Px+1;
 			pokretni_deo[1]=Py;
 			pokretni_deo[2]=Pz;
@@ -428,6 +434,7 @@ int izracunaj_token(){
 		}
 	else if(r==2)
 		{
+			Py=12;
 			pokretni_deo[0]=Px;
 			pokretni_deo[1]=Py+1;
 			pokretni_deo[2]=Pz;
@@ -440,6 +447,7 @@ int izracunaj_token(){
 		}
 	else if(r==3)
 		{
+			Py=13;
 			pokretni_deo[0]=Px;
 			pokretni_deo[1]=Py-1;
 			pokretni_deo[2]=Pz;
@@ -452,6 +460,7 @@ int izracunaj_token(){
 		}
 	else if(r==4)
 		{
+			Py=13;
 			pokretni_deo[0]=Px;
 			pokretni_deo[1]=Py+1;
 			pokretni_deo[2]=Pz;
@@ -464,6 +473,7 @@ int izracunaj_token(){
 		}
 	else if(r==5)
 		{
+			Py=13;
 			pokretni_deo[0]=Px-1;
 			pokretni_deo[1]=Py;
 			pokretni_deo[2]=Pz;
@@ -476,6 +486,7 @@ int izracunaj_token(){
 		}
 	else 
 		{
+			Py=13;
 			pokretni_deo[0]=Px-1;
 			pokretni_deo[1]=Py;
 			pokretni_deo[2]=Pz;
@@ -538,6 +549,7 @@ int m,n,l;
 		}
 	}
 	//ukoliko je popunjen transliramo sve sto je iznad za 3 kocke na dole
+	brojPoena=brojPoena+100;
 	for(m=i;m<i+3;m++)
 	{
 		for(n=j;n<VISINA;n++)
@@ -563,7 +575,8 @@ void provera_kraja(void)
 		for(j=0;j<DUZINA;j++)
 		{
 			if(prostorIgranja[i][VISINA-1][j].popunjen)
-				kraj=true;
+				{kraj=true;
+				animation_on=0;}
 		}
 	}
 }
@@ -615,8 +628,8 @@ void inicijalizuj_matricu(void)
 //provera ispravnosti rotacija , ima ih 4 , slican princip za sve 4
 
 void rotacijaZlevo(void){
-
-	float p1;                      //pomocna promenljiva
+                 
+	float p;                             //pomocna promenljiva
 	float x1=pokretni_deo[0];
 	float y1=pokretni_deo[1];
 	float z1=pokretni_deo[2];
@@ -636,33 +649,33 @@ void rotacijaZlevo(void){
 	//one se rotiraju oko nje za ugao od 90 stepeni
 
 	//za prvu kocku
-	if(x1-Px>0)
+	if(x1>Px)
 	{
-		if((y1-y4) >0){
-			p1=x1;
-			x1=Px+y1-y4;
-			y1=y4-p1+Px;
+		if(y1>y4){
+			p=x1;
+			x1=y1-y4+Px;
+			y1=y4-p+Px;
 		}
-		else if((y1-y4)==0){
-			p1=y1;			
-			y1=y4-x1+Px;
-			x1=Px;		
+		else if(y1==y4){
+			p=x1;			
+			x1=Px;
+			y1=y4-p+Px;		
 		}
 		else{
-			p1=x1;
+			p=x1;
 			x1=Px+y1-y4;
-			y1=y4;
+			y1=y4-p+Px;
 		}
 	}
-	else if(x1-Px==0)
+	else if(x1==Px)
 	{
-		if(y4 > y1){
-			p1=x1;
+		if(y4 > y1){             
+			p=x1;
 			x1=Px-y4+y1;
 			y1=y4;
 		}
-		else{
-			p1=x1;
+		else if(y1 > y4){
+			p=x1;
 			x1=Px+y1-y4;
 			y1=y4;
 		}
@@ -670,51 +683,50 @@ void rotacijaZlevo(void){
 	else
 	{
 		if(y4 > y1){
-			p1=x1;
+			p=x1;
 			x1=Px+y1-y4;
-			y1=y4+Px-p1;
+			y1=y4+Px-p;
 		}
 		else if(y4 == y1){
-			p1=y1;
+			p=y1;
 			y1=Px-x1+y4;
 			x1=Px;
 		}
 		else{
-			p1=y1;
-			y1=y4+Px-x1;
-			x1=Px+p1-y4;
+			p=x1;
+			x1=y1-y4+Px;
+			y1=Px-p+y4;
 		}
 	}
 
 	//za drugu kocku
-
-	if(x2-Px>0)
+	if(x2>Px)
 	{
-		if((y2-y4) >0){
-			p1=x2;
-			x2=Px+y2-y4;
-			y2=y4-p1+Px;
+		if(y2>y4){
+			p=x2;
+			x2=y2-y4+Px;
+			y2=y4-p+Px;
 		}
-		else if((y2-y4)==0){
-			p1=y2;			
-			y2=y4-x2+Px;
-			x2=Px;		
+		else if(y2==y4){
+			p=x2;			
+			x2=Px;
+			y2=y4-p+Px;		
 		}
 		else{
-			p1=x2;
+			p=x2;
 			x2=Px+y2-y4;
-			y2=y4;
+			y2=y4-p+Px;
 		}
 	}
-	else if(x2-Px==0)
+	else if(x2==Px)
 	{
-		if(y4 > y2){
-			p1=x2;
+		if(y4 > y2){             
+			p=x2;
 			x2=Px-y4+y2;
 			y2=y4;
 		}
-		else{
-			p1=x2;
+		else if(y2 > y4){
+			p=x2;
 			x2=Px+y2-y4;
 			y2=y4;
 		}
@@ -722,51 +734,50 @@ void rotacijaZlevo(void){
 	else
 	{
 		if(y4 > y2){
-			p1=x2;
+			p=x2;
 			x2=Px+y2-y4;
-			y2=y4+Px-p1;
+			y2=y4+Px-p;
 		}
 		else if(y4 == y2){
-			p1=y2;
+			p=y2;
 			y2=Px-x2+y4;
 			x2=Px;
 		}
 		else{
-			p1=y2;
-			y2=y4+Px-x2;
-			x2=Px+p1-y4;
+			p=x2;
+			x2=y2-y4+Px;
+			y2=Px-p+y4;
 		}
 	}
-
+		
 	//za trecu kocku
-	
-	if(x3-Px>0)
+	if(x3>Px)
 	{
-		if((y3-y4) >0){
-			p1=x3;
-			x3=Px+y3-y4;
-			y3=y4-p1+Px;
+		if(y3>y4){
+			p=x3;
+			x3=y3-y4+Px;
+			y3=y4-p+Px;
 		}
-		else if((y3-y4)==0){
-			p1=y3;			
-			y3=y4-x3+Px;
-			x3=Px;		
+		else if(y3==y4){
+			p=x3;			
+			x3=Px;
+			y3=y4-p+Px;		
 		}
 		else{
-			p1=x3;
+			p=x3;
 			x3=Px+y3-y4;
-			y3=y4;
+			y3=y4-p+Px;
 		}
 	}
-	else if(x3-Px==0)
+	else if(x3==Px)
 	{
-		if(y4 > y3){
-			p1=x3;
+		if(y4 > y3){             
+			p=x3;
 			x3=Px-y4+y3;
 			y3=y4;
 		}
-		else{
-			p1=x3;
+		else if(y3 > y4){
+			p=x3;
 			x3=Px+y3-y4;
 			y3=y4;
 		}
@@ -774,21 +785,22 @@ void rotacijaZlevo(void){
 	else
 	{
 		if(y4 > y3){
-			p1=x3;
+			p=x3;
 			x3=Px+y3-y4;
-			y3=y4+Px-p1;
+			y3=y4+Px-p;
 		}
 		else if(y4 == y3){
-			p1=y3;
+			p=y3;
 			y3=Px-x3+y4;
 			x3=Px;
 		}
 		else{
-			p1=y3;
-			y3=y4+Px-x3;
-			x3=Px+p1-y4;
+			p=x3;
+			x3=y3-y4+Px;
+			y3=Px-p+y4;
 		}
 	}
+
 
 	if(x1<=0 || x2<=0 || x3<=0 || y1<=0 || y2<=0 || y3<=0 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 
 	|| (prostorIgranja[(int)x1][(int)floor(y1)][(int)z1].popunjen)
@@ -800,23 +812,38 @@ void rotacijaZlevo(void){
 		return;
 	else
 		{
-			pokretni_deo[0]=x1;
+			brZ++;
+
+			if(x1-floor(x1) < ceil(x1)-x1)
+				pokretni_deo[0]=floor(x1);
+			else
+				pokretni_deo[0]=ceil(x1);
+
 			pokretni_deo[1]=y1;
 			pokretni_deo[2]=z1;
-			pokretni_deo[3]=x2;
+
+			if(x2-floor(x2) < ceil(x2)-x2)
+				pokretni_deo[3]=floor(x2);
+			else
+				pokretni_deo[3]=ceil(x2);
+			
 			pokretni_deo[4]=y2;
 			pokretni_deo[5]=z2;
-			pokretni_deo[6]=x3;
+			
+			if(x3-floor(x3) < ceil(x3)-x3)
+				pokretni_deo[6]=floor(x3);
+			else
+				pokretni_deo[6]=ceil(x3);
+
 			pokretni_deo[7]=y3;
 			pokretni_deo[8]=z3;
-			brZ++;
 		}	
 	//ukoliko je rotacija validna azuriraju se nove kordinate i povecava brojac rotacija	
 }
 
 void rotacijaZdesno(void){
 
-	float p1;
+	float p;
 	float x1=pokretni_deo[0];
 	float y1=pokretni_deo[1];
 	float z1=pokretni_deo[2];
@@ -828,36 +855,36 @@ void rotacijaZdesno(void){
 	float x3=pokretni_deo[6];
 	float y3=pokretni_deo[7];
 	float z3=pokretni_deo[8];
-	float y4=Py-animation_param;
-	
+	float y4=(Py-animation_param);
+
 	//za prvu kocku
-	if(x1-Px>0)
+	if(x1>Px)
 	{
-		if((y1-y4) >0){
-			p1=x1;
+		if(y1>y4){
+			p=x1;
 			x1=Px-y1+y4;
-			y1=y4+p1-Px;
+			y1=y4+p-Px;
 		}
-		else if((y1-y4)==0){
-			p1=y1;			
+		else if(y1==y4){
+			p=y1;			
 			y1=y4+x1-Px;
 			x1=Px;		
 		}
 		else{
-			p1=x1;
+			p=x1;
 			x1=Px+y4-y1;
-			y1=p1-Px+y4;
+			y1=p-Px+y4;
 		}
 	}
-	else if(x1-Px==0)
+	else if(x1==Px)
 	{
 		if(y4 > y1){
-			p1=x1;
+			p=x1;
 			x1=Px+y4-y1;
 			y1=y4;
 		}
-		else{
-			p1=x1;
+		else if(y1 > y4){
+			p=x1;
 			x1=Px-y1+y4;
 			y1=y4;
 		}
@@ -865,51 +892,50 @@ void rotacijaZdesno(void){
 	else
 	{
 		if(y4 > y1){
-			p1=y1;
+			p=y1;
 			y1=x1-Px+y4;
-			x1=y4-p1+Px;
+			x1=y4-p+Px;
 		}
 		else if(y4 == y1){
-			p1=y1;
+			p=y1;
 			y1=y4-Px+x1;
 			x1=Px;
 		}
 		else{
-			p1=x1;
+			p=x1;
 			x1=Px-y1+y4;
-			y1=y4-Px+p1;
+			y1=y4-Px+p;
 		}
 	}
 
 	//za drugu kocku
-
-	if(x2-Px>0)
+	if(x2>Px)
 	{
-		if((y2-y4) >0){
-			p1=x2;
+		if(y2>y4){
+			p=x2;
 			x2=Px-y2+y4;
-			y2=y4+p1-Px;
+			y2=y4+p-Px;
 		}
-		else if((y2-y4)==0){
-			p1=y2;			
+		else if(y2==y4){
+			p=y2;			
 			y2=y4+x2-Px;
 			x2=Px;		
 		}
 		else{
-			p1=x2;
+			p=x2;
 			x2=Px+y4-y2;
-			y2=p1-Px+y4;
+			y2=p-Px+y4;
 		}
 	}
-	else if((x2-Px)==0)
+	else if(x2==Px)
 	{
 		if(y4 > y2){
-			p1=x2;
+			p=x2;
 			x2=Px+y4-y2;
 			y2=y4;
 		}
-		else{
-			p1=x2;
+		else if(y2 > y4){
+			p=x2;
 			x2=Px-y2+y4;
 			y2=y4;
 		}
@@ -917,51 +943,50 @@ void rotacijaZdesno(void){
 	else
 	{
 		if(y4 > y2){
-			p1=y2;
+			p=y2;
 			y2=x2-Px+y4;
-			x2=y4-p1+Px;
+			x2=y4-p+Px;
 		}
 		else if(y4 == y2){
-			p1=y2;
+			p=y2;
 			y2=y4-Px+x2;
 			x2=Px;
 		}
 		else{
-			p1=x2;
-			x2=Px+y4-y2;
-			y2=y4-Px+p1;
+			p=x2;
+			x2=Px-y2+y4;
+			y2=y4-Px+p;
 		}
 	}
 
 	//za trecu kocku
-
-	if(x3-Px>0)
+	if(x3>Px)
 	{
-		if((y3-y4) >0){
-			p1=x3;
+		if(y3>y4){
+			p=x3;
 			x3=Px-y3+y4;
-			y3=y4+p1-Px;
+			y3=y4+p-Px;
 		}
-		else if((y3-y4)==0){
-			p1=y3;			
+		else if(y3==y4){
+			p=y3;			
 			y3=y4+x3-Px;
 			x3=Px;		
 		}
 		else{
-			p1=x3;
+			p=x3;
 			x3=Px+y4-y3;
-			y3=p1-Px+y4;
+			y3=p-Px+y4;
 		}
 	}
-	else if(x3-Px==0)
+	else if(x3==Px)
 	{
 		if(y4 > y3){
-			p1=x3;
+			p=x3;
 			x3=Px+y4-y3;
 			y3=y4;
 		}
-		else{
-			p1=x3;
+		else if(y3 > y4){
+			p=x3;
 			x3=Px-y3+y4;
 			y3=y4;
 		}
@@ -969,22 +994,23 @@ void rotacijaZdesno(void){
 	else
 	{
 		if(y4 > y3){
-			p1=y3;
+			p=y3;
 			y3=x3-Px+y4;
-			x3=y4-p1+Px;
+			x3=y4-p+Px;
 		}
 		else if(y4 == y3){
-			p1=y3;
+			p=y3;
 			y3=y4-Px+x3;
 			x3=Px;
 		}
 		else{
-			p1=x3;
-			x3=Px+y4-y3;
-			y3=y4-Px+p1;
+			p=x3;
+			x3=Px-y3+y4;
+			y3=y4-Px+p;
 		}
 	}
-
+								
+	
 	if( x1<=0 || x2<=0 || x3<=0 || y1<=0 || y2<=0 || y3<=0 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1
  	||(prostorIgranja[(int)x1][(int)floor(y1)][(int)z1].popunjen)
 	|| (prostorIgranja[(int)x1][(int)ceil(y1)][(int)z1].popunjen)
@@ -995,22 +1021,241 @@ void rotacijaZdesno(void){
 		return;
 	else
 		{
-			pokretni_deo[0]=x1;
+			brZ--;
+
+			if(x1-floor(x1) < ceil(x1)-x1)
+				pokretni_deo[0]=floor(x1);
+			else
+				pokretni_deo[0]=ceil(x1);
+
 			pokretni_deo[1]=y1;
 			pokretni_deo[2]=z1;
-			pokretni_deo[3]=x2;
+
+			if(x2-floor(x2) < ceil(x2)-x2)
+				pokretni_deo[3]=floor(x2);
+			else
+				pokretni_deo[3]=ceil(x2);
+			
 			pokretni_deo[4]=y2;
 			pokretni_deo[5]=z2;
-			pokretni_deo[6]=x3;
+			
+			if(x3-floor(x3) < ceil(x3)-x3)
+				pokretni_deo[6]=floor(x3);
+			else
+				pokretni_deo[6]=ceil(x3);
+
 			pokretni_deo[7]=y3;
 			pokretni_deo[8]=z3;
-			brZ--;
 		}
 }
 
 void rotacijaXdole(void){
 	
-	float p1;
+	float p;
+	float x1=pokretni_deo[0];
+	float y1=(pokretni_deo[1]);
+	float z1=pokretni_deo[2];
+	
+	float x2=pokretni_deo[3];
+	float y2=(pokretni_deo[4]);
+	float z2=pokretni_deo[5];	
+	
+	float x3=pokretni_deo[6];
+	float y3=(pokretni_deo[7]);
+	float z3=pokretni_deo[8];
+	float y4=Py-animation_param;
+
+	//za prvu kocku
+	if(z1>Pz)
+	{
+		if(y1>y4){
+			p=z1;
+			z1=Pz-y1+y4;
+			y1=y4+p-Pz;
+		}
+		else if(y1==y4){
+			p=y1;			
+			y1=y4+z1-Pz;
+			z1=Pz;		
+		}
+		else{
+			p=z1;
+			z1=Pz+y4-y1;
+			y1=p-Pz+y4;
+		}
+	}
+	else if(z1==Pz)
+	{
+		if(y4 > y1){
+			p=z1;
+			z1=Pz+y4-y1;
+			y1=y4;
+		}
+		else if(y1 > y4){
+			p=z1;
+			z1=Pz-y1+y4;
+			y1=y4;
+		}
+	}
+	else
+	{
+		if(y4 > y1){
+			p=y1;
+			y1=z1-Pz+y4;
+			z1=y4-p+Pz;
+		}
+		else if(y4 == y1){
+			p=y1;
+			y1=y4-Pz+z1;
+			z1=Pz;
+		}
+		else{
+			p=z1;
+			z1=Pz-y1+y4;
+			y1=y4-Pz+p;
+		}
+	}
+
+	//za drugu kocku
+	if(z2>Pz)
+	{
+		if(y2>y4){
+			p=z2;
+			z2=Pz-y2+y4;
+			y2=y4+p-Pz;
+		}
+		else if(y2==y4){
+			p=y2;			
+			y2=y4+z2-Pz;
+			z2=Pz;		
+		}
+		else{
+			p=z2;
+			z2=Pz+y4-y2;
+			y2=p-Pz+y4;
+		}
+	}
+	else if(z2==Pz)
+	{
+		if(y4 > y2){
+			p=z2;
+			z2=Pz+y4-y2;
+			y2=y4;
+		}
+		else if(y2 > y4){
+			p=z2;
+			z2=Pz-y2+y4;
+			y2=y4;
+		}
+	}
+	else
+	{
+		if(y4 > y2){
+			p=y2;
+			y2=z2-Pz+y4;
+			z2=y4-p+Pz;
+		}
+		else if(y4 == y2){
+			p=y2;
+			y2=y4-Pz+z2;
+			z2=Pz;
+		}
+		else{
+			p=z2;
+			z2=Pz-y2+y4;
+			y2=y4-Pz+p;
+		}
+	}
+
+	//za trecu kocku
+	if(z3>Pz)
+	{
+		if(y3>y4){
+			p=z3;
+			z3=Pz-y3+y4;
+			y3=y4+p-Pz;
+		}
+		else if(y3==y4){
+			p=y3;			
+			y3=y4+z3-Pz;
+			z3=Pz;		
+		}
+		else{
+			p=z3;
+			z3=Pz+y4-y3;
+			y3=p-Pz+y4;
+		}
+	}
+	else if(z3==Pz)
+	{
+		if(y4 > y3){
+			p=z3;
+			z3=Pz+y4-y3;
+			y3=y4;
+		}
+		else if(y3 > y4){
+			p=z3;
+			z3=Pz-y3+y4;
+			y3=y4;
+		}
+	}
+	else
+	{
+		if(y4 > y3){
+			p=y3;
+			y3=z3-Pz+y4;
+			z3=y4-p+Pz;
+		}
+		else if(y4 == y3){
+			p=y3;
+			y3=y4-Pz+z3;
+			z3=Pz;
+		}
+		else{
+			p=z3;
+			z3=Pz-y3+y4;
+			y3=y4-Pz+p;
+		}
+	}
+
+	if(z1<=0 || z2<=0 || z3<=0 || y1<=0 || y2<=0 || y3<=0 || z1>=DUZINA-1 || z2>=DUZINA-1 || z3>=DUZINA-1 
+	|| (prostorIgranja[(int)x1][(int)floor(y1)][(int)z1].popunjen)
+	|| (prostorIgranja[(int)x1][(int)ceil(y1)][(int)z1].popunjen)
+	|| (prostorIgranja[(int)x2][(int)floor(y2)][(int)z2].popunjen)
+	|| (prostorIgranja[(int)x2][(int)ceil(y2)][(int)z2].popunjen)
+	|| (prostorIgranja[(int)x3][(int)floor(y3)][(int)z3].popunjen)
+	|| (prostorIgranja[(int)x3][(int)ceil(y3)][(int)z3].popunjen))	
+		return;
+	else
+		{
+			brX++;
+			
+			pokretni_deo[0]=x1;
+			pokretni_deo[1]=y1;
+			if(z1-floor(z1) < ceil(z1)-z1)
+				pokretni_deo[2]=floor(z1);
+			else
+				pokretni_deo[2]=ceil(z1);
+			
+			pokretni_deo[3]=x2;
+			pokretni_deo[4]=y2;
+			if(z2-floor(z2) < ceil(z2)-z2)
+				pokretni_deo[5]=floor(z2);
+			else
+				pokretni_deo[5]=ceil(z2);
+
+			pokretni_deo[6]=x3;
+			pokretni_deo[7]=y3;
+			if(z3-floor(z3) < ceil(z3)-z3)
+				pokretni_deo[8]=floor(z3);
+			else
+				pokretni_deo[8]=ceil(z3);
+		}
+}
+
+void rotacijaXgore(void){
+	
+	float p;
 	float x1=pokretni_deo[0];
 	float y1=pokretni_deo[1];
 	float z1=pokretni_deo[2];
@@ -1022,160 +1267,158 @@ void rotacijaXdole(void){
 	float x3=pokretni_deo[6];
 	float y3=pokretni_deo[7];
 	float z3=pokretni_deo[8];
-	float y4=Py-animation_param;
+	float y4=(Py-animation_param);
 
 	//za prvu kocku
-	if(z1-Pz>0)
+	if(z1>Pz)
 	{
-		if((y1-y4) >0){
-			p1=z1;
-			z1=Pz-y1+y4;
-			y1=y4+p1-Pz;
+		if(y1>y4){
+			p=z1;
+			z1=y1-y4+Pz;
+			y1=y4-p+Pz;
 		}
-		else if((y1-y4)==0){
-			p1=y1;			
-			y1=y4+z1-Pz;
-			z1=Pz;		
+		else if(y1==y4){
+			p=z1;			
+			z1=Pz;
+			y1=y4-p+Pz;		
 		}
 		else{
-			p1=z1;
-			z1=Pz+y4-y1;
-			y1=p1-Pz+y4;
+			p=z1;
+			z1=Pz+y1-y4;
+			y1=y4-p+Pz;
 		}
 	}
-	else if(z1-Pz==0)
+	else if(z1==Pz)
 	{
-		if(y4 > y1){
-			p1=z1;
-			z1=Pz+y4-y1;
+		if(y4 > y1){             
+			p=z1;
+			z1=Pz-y4+y1;
 			y1=y4;
 		}
-		else{
-			p1=z1;
-			z1=Pz-y1+y4;
+		else if(y1 > y4){
+			p=z1;
+			z1=Pz+y1-y4;
 			y1=y4;
 		}
 	}
 	else
 	{
 		if(y4 > y1){
-			p1=y1;
-			y1=z1-Pz+y4;
-			z1=y4-p1+Pz;
+			p=z1;
+			z1=Pz+y1-y4;
+			y1=y4+Pz-p;
 		}
 		else if(y4 == y1){
-			p1=y1;
-			y1=y4-Pz+z1;
-			x1=Px;
+			p=y1;
+			y1=Pz-z1+y4;
+			z1=Pz;
 		}
 		else{
-			p1=z1;
-			z1=Pz+y4-y1;
-			y1=y4-Pz+p1;
+			p=z1;
+			z1=y1-y4+Pz;
+			y1=Pz-p+y4;
 		}
 	}
 
 	//za drugu kocku
-
-	if(z2-Pz>0)
+	if(z2>Pz)
 	{
-		if((y2-y4) >0){
-			p1=z2;
-			z2=Pz-y2+y4;
-			y2=y4+p1-Pz;
+		if(y2>y4){
+			p=z2;
+			z2=y2-y4+Pz;
+			y2=y4-p+Pz;
 		}
-		else if((y2-y4)==0){
-			p1=y2;			
-			y2=y4+z2-Pz;
-			z2=Pz;		
+		else if(y2==y4){
+			p=z2;			
+			z2=Pz;
+			y2=y4-p+Pz;		
 		}
 		else{
-			p1=z2;
-			z2=Pz+y4-y2;
-			y2=p1-Pz+y4;
+			p=z2;
+			z2=Pz+y2-y4;
+			y2=y4-p+Pz;
 		}
 	}
-	else if(z2-Pz==0)
+	else if(z2==Pz)
 	{
-		if(y4 > y2){
-			p1=z2;
-			z2=Pz+y4-y2;
+		if(y4 > y2){             
+			p=z2;
+			z2=Pz-y4+y2;
 			y2=y4;
 		}
-		else{
-			p1=z2;
-			z2=Pz-y2+y4;
+		else if(y2 > y4){
+			p=z2;
+			z2=Pz+y2-y4;
 			y2=y4;
 		}
 	}
 	else
 	{
 		if(y4 > y2){
-			p1=y2;
-			y2=z2-Pz+y4;
-			z2=y4-p1+Pz;
+			p=z2;
+			z2=Pz+y2-y4;
+			y2=y4+Pz-p;
 		}
 		else if(y4 == y2){
-			p1=y2;
-			y2=y4-Pz+z2;
+			p=y2;
+			y2=Pz-z2+y4;
 			z2=Pz;
 		}
 		else{
-			p1=z2;
-			z2=Pz+y4-y2;
-			y2=y4-Pz+p1;
+			p=z2;
+			z2=y2-y4+Pz;
+			y2=Pz-p+y4;
 		}
 	}
-
+		
 	//za trecu kocku
-
-	if(z3-Pz>0)
+	if(z3>Pz)
 	{
-		if((y3-y4) >0){
-			p1=z3;
-			z3=Pz-y3+y4;
-			y3=y4+p1-Pz;
+		if(y3>y4){
+			p=z3;
+			z3=y3-y4+Pz;
+			y3=y4-p+Pz;
 		}
-		else if((y3-y4)==0){
-			p1=y3;			
-			y3=y4+z3-Pz;
-			z3=Pz;		
+		else if(y3==y4){
+			p=z3;			
+			z3=Pz;
+			y3=y4-p+Pz;		
 		}
 		else{
-			p1=z3;
-			z3=Pz+y4-y3;
-			y3=p1-Pz+y4;
+			p=z3;
+			z3=Pz+y3-y4;
+			y3=y4-p+Pz;
 		}
 	}
-	else if(z3-Pz==0)
+	else if(z3==Pz)
 	{
-		if(y4 > y3){
-			p1=z3;
-			z3=Pz+y4-y3;
+		if(y4 > y3){             
+			p=z3;
+			z3=Pz-y4+y3;
 			y3=y4;
 		}
-		else{
-			p1=z3;
-			z3=Pz-y3+y4;
+		else if(y3 > y4){
+			p=z3;
+			z3=Pz+y3-y4;
 			y3=y4;
 		}
 	}
 	else
 	{
 		if(y4 > y3){
-			p1=y3;
-			y3=z3-Pz+y4;
-			z3=y4-p1+Pz;
+			p=z3;
+			z3=Pz+y3-y4;
+			y3=y4+Pz-p;
 		}
 		else if(y4 == y3){
-			p1=y3;
-			y3=y4-Pz+z3;
+			p=y3;
+			y3=Pz-z3+y4;
 			z3=Pz;
 		}
 		else{
-			p1=z3;
-			z3=Pz+y4-y3;
-			y3=y4-Pz+p1;
+			p=z3;
+			z3=y3-y4+Pz;
+			y3=Pz-p+y4;
 		}
 	}
 
@@ -1189,22 +1432,34 @@ void rotacijaXdole(void){
 		return;
 	else
 		{
+			brX--;
+
 			pokretni_deo[0]=x1;
 			pokretni_deo[1]=y1;
-			pokretni_deo[2]=z1;
+			if(z1-floor(z1) < ceil(z1)-z1)
+				pokretni_deo[2]=floor(z1);
+			else
+				pokretni_deo[2]=ceil(z1);
+			
 			pokretni_deo[3]=x2;
 			pokretni_deo[4]=y2;
-			pokretni_deo[5]=z2;
+			if(z2-floor(z2) < ceil(z2)-z2)
+				pokretni_deo[5]=floor(z2);
+			else
+				pokretni_deo[5]=ceil(z2);
+
 			pokretni_deo[6]=x3;
 			pokretni_deo[7]=y3;
-			pokretni_deo[8]=z3;
-			brX--;
-		}
+			if(z3-floor(z3) < ceil(z3)-z3)
+				pokretni_deo[8]=floor(z3);
+			else
+				pokretni_deo[8]=ceil(z3);
+		}	
 }
 
-void rotacijaXgore(void){
-	
-	float p1;
+//provera translacija , ima ih 4 , slican princip za sve 4
+void translacijaLevo(void){
+
 	float x1=pokretni_deo[0];
 	float y1=pokretni_deo[1];
 	float z1=pokretni_deo[2];
@@ -1216,314 +1471,120 @@ void rotacijaXgore(void){
 	float x3=pokretni_deo[6];
 	float y3=pokretni_deo[7];
 	float z3=pokretni_deo[8];
-	float y4=Py-animation_param;	
-
-	//za prvu kocku
-	if(z1-Pz>0)
-	{
-		if((y1-y4) >0){
-			p1=z1;
-			z1=Pz+y1-y4;
-			y1=y4-p1+Pz;
-		}
-		else if((y1-y4)==0){
-			p1=y1;			
-			y1=y4-z1+Pz;
-			z1=Pz;		
-		}
-		else{
-			p1=z1;
-			z1=Pz+y1-y4;
-			y1=y4;
-		}
-	}
-	else if(z1-Pz==0)
-	{
-		if(y4 > y1){
-			p1=z1;
-			z1=Pz-y4+y1;
-			y1=y4;
-		}
-		else{
-			p1=z1;
-			z1=Pz+y1-y4;
-			y1=y4;
-		}
-	}
-	else
-	{
-		if(y4 > y1){
-			p1=z1;
-			z1=Pz+y1-y4;
-			y1=y4+Pz-p1;
-		}
-		else if(y4 == y1){
-			p1=y1;
-			y1=Pz-z1+y4;
-			z1=Pz;
-		}
-		else{
-			p1=y1;
-			y1=y4+Pz-z1;
-			z1=Pz+p1-y4;
-		}
-	}
-
-	//za drugu kocku
-
-	if(z2-Pz>0)
-	{
-		if((y2-y4) >0){
-			p1=z2;
-			z2=Pz+y2-y4;
-			y2=y4-p1+Pz;
-		}
-		else if((y2-y4)==0){
-			p1=y2;			
-			y2=y4-z2+Pz;
-			z2=Pz;		
-		}
-		else{
-			p1=z2;
-			z2=Pz+y2-y4;
-			y2=y4;
-		}
-	}
-	else if(z2-Pz==0)
-	{
-		if(y4 > y2){
-			p1=z2;
-			z2=Pz-y4+y2;
-			y2=y4;
-		}
-		else{
-			p1=z2;
-			z2=Pz+y2-y4;
-			y2=y4;
-		}
-	}
-	else
-	{
-		if(y4 > y2){
-			p1=z2;
-			z2=Pz+y2-y4;
-			y2=y4+Pz-p1;
-		}
-		else if(y4 == y2){
-			p1=y2;
-			y2=Pz-z2+y4;
-			z2=Pz;
-		}
-		else{
-			p1=y2;
-			y2=y4+Pz-z2;
-			z2=Pz+p1-y4;
-		}
-	}
-
-	//za trecu kocku
-
-	if(z3-Pz>0)
-	{
-		if((y3-y4) >0){
-			p1=z3;
-			z3=Pz+y3-y4;
-			y3=y4-p1+Pz;
-		}
-		else if((y3-y4)==0){
-			p1=y3;			
-			y3=y4-z3+Pz;
-			z3=Pz;		
-		}
-		else{
-			p1=z3;
-			z3=Pz+y3-y4;
-			y3=y4;
-		}
-	}
-	else if(z3-Pz==0)
-	{
-		if(y4 > y3){
-			p1=z3;
-			z3=Pz-y4+y3;
-			y3=y4;
-		}
-		else{
-			p1=z3;
-			z3=Pz+y3-y4;
-			y3=y4;
-		}
-	}
-	else
-	{
-		if(y4 > y3){
-			p1=z3;
-			z3=Pz+y3-y4;
-			y3=y4+Pz-p1;
-		}
-		else if(y4 == y3){
-			p1=y3;
-			y3=Pz-z3+y4;
-			z3=Pz;
-		}
-		else{
-			p1=y3;
-			y3=y4+Pz-z3;
-			z3=Pz+p1-y4;
-		}
-	}
-	
-	if(z1<=0 || z2<=0 || z3<=0 || y1<=0 || y2<=0 || y3<=0 || z1>=DUZINA-1 || z2>=DUZINA-1 || z3>=DUZINA-1 
-	|| (prostorIgranja[(int)x1][(int)floor(y1)][(int)z1].popunjen)
-	|| (prostorIgranja[(int)x1][(int)ceil(y1)][(int)z1].popunjen)
-	|| (prostorIgranja[(int)x2][(int)floor(y2)][(int)z2].popunjen)
-	|| (prostorIgranja[(int)x2][(int)ceil(y2)][(int)z2].popunjen)
-	|| (prostorIgranja[(int)x3][(int)floor(y3)][(int)z3].popunjen)
-	|| (prostorIgranja[(int)x3][(int)ceil(y3)][(int)z3].popunjen))	
-		return;
-	else
-		{
-			pokretni_deo[0]=x1;
-			pokretni_deo[1]=y1;
-			pokretni_deo[2]=z1;
-			pokretni_deo[3]=x2;
-			pokretni_deo[4]=y2;
-			pokretni_deo[5]=z2;
-			pokretni_deo[6]=x3;
-			pokretni_deo[7]=y3;
-			pokretni_deo[8]=z3;
-			brX++;
-		}
-}
-
-//provera translacija , ima ih 4 , slican princip za sve 4
-void translacijaLevo(void){
-
-	int x1=(int)pokretni_deo[0];
-	float y1=pokretni_deo[1];
-	int z1=(int)pokretni_deo[2];
-	
-	int x2=(int)pokretni_deo[3];
-	float y2=pokretni_deo[4];
-	int z2=(int)pokretni_deo[5];	
-	
-	int x3=(int)pokretni_deo[6];
-	float y3=pokretni_deo[7];
-	int z3=(int)pokretni_deo[8];
 
 	//ukoliko se pokretna kocka nalazi izmedju sve staticne po visini moramo da proverimo za obe
 	
-	if(Px>=SIRINA-1 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 ||
-	(prostorIgranja[x1+1][(int)floor(y1)][z1].popunjen)
-	|| (prostorIgranja[x1+1][(int)ceil(y1)][z1].popunjen)
-	|| (prostorIgranja[x2+1][(int)floor(y2)][z2].popunjen)
-	|| (prostorIgranja[x2+1][(int)ceil(y2)][z2].popunjen)
-	|| (prostorIgranja[x3+1][(int)floor(y3)][z3].popunjen)
-	|| (prostorIgranja[x3+1][(int)ceil(y3)][z3].popunjen)
-	|| (prostorIgranja[Px+1][(int)floor(Py-animation_param)][Pz].popunjen)
-	|| (prostorIgranja[Px+1][(int)ceil(Py-animation_param)][Pz].popunjen))
+	if(Px>=SIRINA-1 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 
+	||(prostorIgranja[(int)(x1+1)][(int)floor(y1)][(int)z1].popunjen)
+	|| (prostorIgranja[(int)(x1+1)][(int)ceil(y1)][(int)z1].popunjen)
+	|| (prostorIgranja[(int)(x2+1)][(int)floor(y2)][(int)z2].popunjen)
+	|| (prostorIgranja[(int)(x2+1)][(int)ceil(y2)][(int)z2].popunjen)
+	|| (prostorIgranja[(int)(x3+1)][(int)floor(y3)][(int)z3].popunjen)
+	|| (prostorIgranja[(int)(x3+1)][(int)ceil(y3)][(int)z3].popunjen)
+	|| (prostorIgranja[(int)(Px+1)][(int)floor(Py-animation_param)][(int)Pz].popunjen)
+	|| (prostorIgranja[(int)(Px+1)][(int)ceil(Py-animation_param)][(int)Pz].popunjen))
 		return;
 	else{
-		Px++;
 		pokretni_deo[0]=x1+1;
 		pokretni_deo[3]=x2+1;
 		pokretni_deo[6]=x3+1;
+		Px++;
 		}
 }
 
 void translacijaDesno(void){
 
-	int x1=(int)pokretni_deo[0];
+	float x1=pokretni_deo[0];
 	float y1=pokretni_deo[1];
-	int z1=(int)pokretni_deo[2];
+	float z1=pokretni_deo[2];
 	
-	int x2=(int)pokretni_deo[3];
+	float x2=pokretni_deo[3];
 	float y2=pokretni_deo[4];
-	int z2=(int)pokretni_deo[5];	
+	float z2=pokretni_deo[5];	
 	
-	int x3=(int)pokretni_deo[6];
+	float x3=pokretni_deo[6];
 	float y3=pokretni_deo[7];
-	int z3=(int)pokretni_deo[8];	
+	float z3=pokretni_deo[8];	
 		
-	if(Px<=0 || x1<=0 || x2<=0 || x3<=0 ||
-	(prostorIgranja[x1-1][(int)floor(y1)][z1].popunjen)
-	|| (prostorIgranja[x1-1][(int)ceil(y1)][z1].popunjen)
-	|| (prostorIgranja[x2-1][(int)floor(y2)][z2].popunjen)
-	|| (prostorIgranja[x2-1][(int)ceil(y2)][z2].popunjen)
-	|| (prostorIgranja[x3-1][(int)floor(y3)][z3].popunjen)
-	|| (prostorIgranja[x3-1][(int)ceil(y3)][z3].popunjen)
-	|| (prostorIgranja[Px-1][(int)floor(Py-animation_param)][Pz].popunjen)
-	|| (prostorIgranja[Px-1][(int)ceil(Py-animation_param)][Pz].popunjen))
+	if(Px<=0 || x1<=0 || x2<=0 || x3<=0 
+	|| (prostorIgranja[(int)(x1-1)][(int)floor(y1)][(int)z1].popunjen)
+	|| (prostorIgranja[(int)(x1-1)][(int)ceil(y1)][(int)z1].popunjen)
+	|| (prostorIgranja[(int)(x2-1)][(int)floor(y2)][(int)z2].popunjen)
+	|| (prostorIgranja[(int)(x2-1)][(int)ceil(y2)][(int)z2].popunjen)
+	|| (prostorIgranja[(int)(x3-1)][(int)floor(y3)][(int)z3].popunjen)
+	|| (prostorIgranja[(int)(x3-1)][(int)ceil(y3)][(int)z3].popunjen)
+	|| (prostorIgranja[(int)(Px-1)][(int)floor(Py-animation_param)][(int)Pz].popunjen)
+	|| (prostorIgranja[(int)(Px-1)][(int)ceil(Py-animation_param)][(int)Pz].popunjen))
 		return;
 	else{
-		Px--;
 		pokretni_deo[0]=x1-1;
 		pokretni_deo[3]=x2-1;
 		pokretni_deo[6]=x3-1;
+		Px--;
 		}	
 }
 	
 void translacijaNapred(void){
 
-	int x1=(int)pokretni_deo[0];
+	float x1=pokretni_deo[0];
 	float y1=pokretni_deo[1];
-	int z1=(int)pokretni_deo[2];
+	float z1=pokretni_deo[2];
 	
-	int x2=(int)pokretni_deo[3];
+	float x2=pokretni_deo[3];
 	float y2=pokretni_deo[4];
-	int z2=(int)pokretni_deo[5];	
+	float z2=pokretni_deo[5];	
 	
-	int x3=(int)pokretni_deo[6];
+	float x3=pokretni_deo[6];
 	float y3=pokretni_deo[7];
-	int z3=(int)pokretni_deo[8];	
+	float z3=pokretni_deo[8];	
 	
-	if(Pz>=DUZINA-1 || z1>=DUZINA-1 || z2>=DUZINA-1 || z3>=DUZINA-1 ||
-	 (prostorIgranja[x1][(int)floor(y1)][z1+1].popunjen)
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1+1].popunjen)
-	|| (prostorIgranja[x2][(int)floor(y2)][z2+1].popunjen)
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2+1].popunjen)
-	|| (prostorIgranja[x3][(int)floor(y3)][z3+1].popunjen)
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3+1].popunjen)
-	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz+1].popunjen)
-	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz+1].popunjen))
+	if(Pz>=DUZINA-1 || z1>=DUZINA-1 || z2>=DUZINA-1 || z3>=DUZINA-1 
+	|| (prostorIgranja[(int)x1][(int)floor(y1)][(int)(z1+1)].popunjen)
+	|| (prostorIgranja[(int)x1][(int)ceil(y1)][(int)(z1+1)].popunjen)
+	|| (prostorIgranja[(int)x2][(int)floor(y2)][(int)(z2+1)].popunjen)
+	|| (prostorIgranja[(int)x2][(int)ceil(y2)][(int)(z2+1)].popunjen)
+	|| (prostorIgranja[(int)x3][(int)floor(y3)][(int)(z3+1)].popunjen)
+	|| (prostorIgranja[(int)x3][(int)ceil(y3)][(int)(z3+1)].popunjen)
+	|| (prostorIgranja[(int)Px][(int)floor(Py-animation_param)][(int)(Pz+1)].popunjen)
+	|| (prostorIgranja[(int)Px][(int)ceil(Py-animation_param)][(int)(Pz+1)].popunjen))
 		return;
 	else{
-		Pz++;
 		pokretni_deo[2]=z1+1;
 		pokretni_deo[5]=z2+1;
 		pokretni_deo[8]=z3+1;
+		Pz++;
 		}	
 }
 
 void translacijaNazad(void){
 
-	int x1=(int)pokretni_deo[0];
+	float x1=pokretni_deo[0];
 	float y1=pokretni_deo[1];
-	int z1=(int)pokretni_deo[2];
+	float z1=pokretni_deo[2];
 	
-	int x2=(int)pokretni_deo[3];
+	float x2=pokretni_deo[3];
 	float y2=pokretni_deo[4];
-	int z2=(int)pokretni_deo[5];	
+	float z2=pokretni_deo[5];	
 	
-	int x3=(int)pokretni_deo[6];
+	float x3=pokretni_deo[6];
 	float y3=pokretni_deo[7];
-	int z3=(int)pokretni_deo[8];	
+	float z3=pokretni_deo[8];	
 	
-	if(Pz<=0 || z1<=0 || z2<=0 || z3<=0 || 
-	(prostorIgranja[x1][(int)floor(y1)][z1-1].popunjen)
-	|| (prostorIgranja[x1][(int)ceil(y1)][z1-1].popunjen)
-	|| (prostorIgranja[x2][(int)floor(y2)][z2-1].popunjen)
-	|| (prostorIgranja[x2][(int)ceil(y2)][z2-1].popunjen)
-	|| (prostorIgranja[x3][(int)floor(y3)][z3-1].popunjen)
-	|| (prostorIgranja[x3][(int)ceil(y3)][z3-1].popunjen)
-	|| (prostorIgranja[Px][(int)floor(Py-animation_param)][Pz-1].popunjen)
-	|| (prostorIgranja[Px][(int)ceil(Py-animation_param)][Pz-1].popunjen))
+	if(Pz<=0 || z1<=0 || z2<=0 || z3<=0 
+	|| (prostorIgranja[(int)x1][(int)floor(y1)][(int)(z1-1)].popunjen)
+	|| (prostorIgranja[(int)x1][(int)ceil(y1)][(int)(z1-1)].popunjen)
+	|| (prostorIgranja[(int)x2][(int)floor(y2)][(int)(z2-1)].popunjen)
+	|| (prostorIgranja[(int)x2][(int)ceil(y2)][(int)(z2-1)].popunjen)
+	|| (prostorIgranja[(int)x3][(int)floor(y3)][(int)(z3-1)].popunjen)
+	|| (prostorIgranja[(int)x3][(int)ceil(y3)][(int)(z3-1)].popunjen)
+	|| (prostorIgranja[(int)Px][(int)floor(Py-animation_param)][(int)(Pz-1)].popunjen)
+	|| (prostorIgranja[(int)Px][(int)ceil(Py-animation_param)][(int)(Pz-1)].popunjen))
 		return;
 	else{
-		Pz--;
 		pokretni_deo[2]=z1-1;
 		pokretni_deo[5]=z2-1;
 		pokretni_deo[8]=z3-1;
+		Pz--;
 		}
 }
 
@@ -1666,7 +1727,7 @@ void iscrtaj_kocku(float x,float y,float z,int c)
 	glVertex3f(x-0.5,y-0.5,z+0.5);
 	glEnd();
 }
-
+/*
 void oblik_TR(float x,float y,float z)
 {
 	iscrtaj_kocku(x+1,y,z,0);
@@ -1722,4 +1783,4 @@ void oblik_XR(float x,float y,float z)
 	iscrtaj_kocku(x,y+1,z,6);
 	iscrtaj_kocku(x,y+1,z-1,6);
 }
-
+*/

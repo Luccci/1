@@ -47,9 +47,6 @@ int Px=CENTAR;
 int Py=VISINA-1;
 int Pz=CENTAR;
 
-//broj rotacija oko Z i X osa
-int brZ=0;
-int brX=0;
 //boje i pozicija svetla
 
 GLfloat light_position[]={1,1,1,0};
@@ -106,15 +103,6 @@ void proveri_blokove();
 void proveri_blok(int i,int j,int k);
 void provera_kraja();
 void iscrtaj_kocku(float x,float y,float z,int c);
-/*
-void oblik_TR(float x,float y,float z);
-void oblik_OR(float x,float y,float z);
-void oblik_IR(float x,float y,float z);
-void oblik_LR(float x,float y,float z);
-void oblik_ZR(float x,float y,float z);
-void oblik_YR(float x,float y,float z);
-void oblik_XR(float x,float y,float z);
-*/
 
 void rotacijaZlevo();
 void rotacijaZdesno();
@@ -127,18 +115,11 @@ void translacijaNapred();
 void translacijaNazad();
 
 //niz u kome cuvamo koordinate pokretnog oblika za ostale 3 kocke po 3 koordinate 
+// pozicije u nizu predstavljaju x1,y1,z1, x2,y2,z2, x3,y3,z3 koordinate za redom za kocke 1,2,3 
+//preko ovog niza pratimo pozicije ostale 3 kocke koje padaju posto za cetvrtu koja je i centar mase oblika
+//vec imamo kao Px,Py-animation_param,Pz
 float pokretni_deo[COORD_CENTR_SIZE];
 
-//niz pokazivaca funkcija na osnovu ostatka pri deljenju pseudo slcajnog broja bira se oblik
-/*void(*niz_pokazivaca_funkcija[])(float,float,float)=
-	{oblik_TR,
-	oblik_OR,
-	oblik_IR,
-	oblik_LR,
-	oblik_ZR,
-	oblik_YR,
-	oblik_XR};
-*/
 int main(int argc, char **argv)
 {
 	glutInit(&argc,argv);
@@ -205,17 +186,7 @@ static void on_display(void)
 	iscrtaj_kocku(pokretni_deo[3],pokretni_deo[4],pokretni_deo[5],token);
 	iscrtaj_kocku(pokretni_deo[6],pokretni_deo[7],pokretni_deo[8],token);
 	iscrtaj_kocku(Px,Py-animation_param,Pz,token);
-/*	glPushMatrix();
-	
-		glTranslatef(Px,Py-animation_param,Pz);
-		glRotatef( brZ *90 , 0, 0, -1);
-		glRotatef( brX *90 , 1, 0, 0);
-		glTranslatef(-Px,-Py+animation_param,-Pz);
-	
-		(*niz_pokazivaca_funkcija[token])(Px,Py-animation_param,Pz);
-	
-	glPopMatrix();	
-*/
+
 	glutSwapBuffers();
 	}
 
@@ -243,8 +214,6 @@ static void on_keyboard(unsigned char key,int x,int y)
 		case 'r':
 			Px=CENTAR;
 			Pz=CENTAR;
-			brZ=0;
-			brX=0;
 			animation_on=0;
 			animation_param=0;
 			kraj=false;
@@ -289,12 +258,6 @@ static void on_keyboard(unsigned char key,int x,int y)
 				translacijaNazad();
 				}
 			break;
-	/*	case 'f':
-			if(animation_on){
-				brzo=true;
-				brzina_pada=brzina_pada_ubrzano;
-				brTimer=brTimer+(10-brTimer%10);}
-			break;*/
 		//esc	    	
 		case 27:
 			exit(EXIT_SUCCESS);
@@ -323,6 +286,7 @@ static void on_timer(int value)
 		int z3=(int)pokretni_deo[8];
 		int y4=(int)(centarY);		
 
+		//indikator oznacava da li je oblik koji pada pao na postolje ili na drugi oblik
 		bool indikator=false;
 		if( y1>0 && y2>0 && y3>0 && y4>0)
 		{	
@@ -341,19 +305,12 @@ static void on_timer(int value)
 						prostorIgranja[x1][y3][z1].boja=token;
 						prostorIgranja[Px][y4][Pz].popunjen=true;
 						prostorIgranja[Px][y4][Pz].boja=token;
-						indikator=true;								
+						indikator=true;	
+			//ukoliko je oblik pao na staticni deo postaje statican							
 					}
 					else
 						brTimer++;
 				}
-			/*else if(brzo)
-				{
-				animation_param = animation_param + brzina_pada;
-				pokretni_deo[1]=pokretni_deo[1]-brzina_pada;
-				pokretni_deo[4]=pokretni_deo[4]-brzina_pada;
-				pokretni_deo[7]=pokretni_deo[7]-brzina_pada;
-				brTimer=brTimer+brTimerFast;
-				}*/
 			else
 				{
 				animation_param = animation_param + brzina_pada;
@@ -386,13 +343,12 @@ static void on_timer(int value)
 			brzina_pada=brzina_pada_normalno;
 			Px=CENTAR;
 			Pz=CENTAR;
-			brX=0;
-			brZ=0;
 			brzo=false;
 			token=izracunaj_token();
 			animation_on=1;
 			}
-		
+
+//ovde proveravamo da li se prostor napunio do vrha sto oznacava kraj igre ako jeste		
 		provera_kraja();	
 	
 		if(animation_on){
@@ -522,6 +478,8 @@ void iscrtaj_staticni_deo(void)
 void proveri_blokove(void){
 int i,j,k;
 //ne proveravamo blokove koje predstavljaju poslednje 2 koordinate u svakoj osi jer ne mogu popuniti 3*3*3
+//svaki blok je jednoznacno odredjen pozicijom sa najmanjim koordinatama koja se nalazi unutar njega
+// min(x),min(y),min(z);
 	for(i=0;i<SIRINA-2;i++)
 	{
 		for(j=0;j<VISINA-2;j++)
@@ -574,9 +532,10 @@ void provera_kraja(void)
 	{
 		for(j=0;j<DUZINA;j++)
 		{
-			if(prostorIgranja[i][VISINA-1][j].popunjen)
+			if(prostorIgranja[i][VISINA-3][j].popunjen)
 				{kraj=true;
-				animation_on=0;}
+				animation_on=0;
+				printf("%ld",brojPoena);}
 		}
 	}
 }
@@ -625,6 +584,7 @@ void inicijalizuj_matricu(void)
 	}
 }
 
+//izracunavanje rotacija 
 //provera ispravnosti rotacija , ima ih 4 , slican princip za sve 4
 
 void rotacijaZlevo(void){
@@ -800,7 +760,8 @@ void rotacijaZlevo(void){
 			y3=Px-p+y4;
 		}
 	}
-
+	//proveravamo da li se prilikom rotacije oblik ne sudara sa drugim kockama
+	// i da li izlazi iz prostora
 
 	if(x1<=0 || x2<=0 || x3<=0 || y1<=0 || y2<=0 || y3<=0 || x1>=SIRINA-1 || x2>=SIRINA-1 || x3>=SIRINA-1 
 	|| (prostorIgranja[(int)x1][(int)floor(y1)][(int)z1].popunjen)
@@ -812,8 +773,6 @@ void rotacijaZlevo(void){
 		return;
 	else
 		{
-			brZ++;
-
 			if(x1-floor(x1) < ceil(x1)-x1)
 				pokretni_deo[0]=floor(x1);
 			else
@@ -838,7 +797,8 @@ void rotacijaZlevo(void){
 			pokretni_deo[7]=y3;
 			pokretni_deo[8]=z3;
 		}	
-	//ukoliko je rotacija validna azuriraju se nove kordinate i povecava brojac rotacija	
+	//ukoliko je rotacija validna azuriraju se nove kordinate
+	//najpre popravlamo vrednost na valjani ceo broj	
 }
 
 void rotacijaZdesno(void){
@@ -1021,8 +981,6 @@ void rotacijaZdesno(void){
 		return;
 	else
 		{
-			brZ--;
-
 			if(x1-floor(x1) < ceil(x1)-x1)
 				pokretni_deo[0]=floor(x1);
 			else
@@ -1227,9 +1185,7 @@ void rotacijaXdole(void){
 	|| (prostorIgranja[(int)x3][(int)ceil(y3)][(int)z3].popunjen))	
 		return;
 	else
-		{
-			brX++;
-			
+		{	
 			pokretni_deo[0]=x1;
 			pokretni_deo[1]=y1;
 			if(z1-floor(z1) < ceil(z1)-z1)
@@ -1432,8 +1388,6 @@ void rotacijaXgore(void){
 		return;
 	else
 		{
-			brX--;
-
 			pokretni_deo[0]=x1;
 			pokretni_deo[1]=y1;
 			if(z1-floor(z1) < ceil(z1)-z1)
@@ -1457,6 +1411,7 @@ void rotacijaXgore(void){
 		}	
 }
 
+//izracunavanje translacija
 //provera translacija , ima ih 4 , slican princip za sve 4
 void translacijaLevo(void){
 
@@ -1588,10 +1543,9 @@ void translacijaNazad(void){
 		}
 }
 
-    //funkcije za iscrtavanje oblika
-    //funkcije uzimaju za argumente pozicije na kojima se iscrtava oblik
-    //one u sebi pozivaju po cetiri funkcije "iscrtaj kocku" i tako nastaje oblik
-    //najpre na osnovu cetvrtog argumenta saznajemo boju 
+    //funkcija za iscrtavanje oblika
+    //funkcija uzima za argumente poziciju na kojoj se iscrtava kocka
+    //na osnovu cetvrtog argumenta saznajemo boju 
 
 void iscrtaj_kocku(float x,float y,float z,int c)
 {
@@ -1727,60 +1681,4 @@ void iscrtaj_kocku(float x,float y,float z,int c)
 	glVertex3f(x-0.5,y-0.5,z+0.5);
 	glEnd();
 }
-/*
-void oblik_TR(float x,float y,float z)
-{
-	iscrtaj_kocku(x+1,y,z,0);
-	iscrtaj_kocku(x,y,z,0);
-	iscrtaj_kocku(x-1,y,z,0);
-	iscrtaj_kocku(x,y+1,z,0);
-}
 
-void oblik_OR(float x,float y,float z)
-{
-	iscrtaj_kocku(x,y,z,1);
-	iscrtaj_kocku(x+1,y,z,1);
-	iscrtaj_kocku(x,y+1,z,1);
-	iscrtaj_kocku(x+1,y+1,z,1);
-}
-
-void oblik_IR(float x,float y,float z)
-{
-	iscrtaj_kocku(x,y,z,2);
-	iscrtaj_kocku(x,y-1,z,2);
-	iscrtaj_kocku(x,y+1,z,2);
-	iscrtaj_kocku(x,y+2,z,2);
-}
-
-void oblik_LR(float x,float y,float z)
-{
-	iscrtaj_kocku(x,y-1,z,3);
-	iscrtaj_kocku(x,y,z,3);
-	iscrtaj_kocku(x,y+1,z,3);
-	iscrtaj_kocku(x+1,y+1,z,3);
-}
-
-void oblik_ZR(float x,float y,float z)
-{
-	iscrtaj_kocku(x,y,z,4);
-	iscrtaj_kocku(x,y+1,z,4);
-	iscrtaj_kocku(x+1,y+1,z,4);
-	iscrtaj_kocku(x-1,y,z,4);
-}
-
-void oblik_YR(float x,float y,float z)
-{
-	iscrtaj_kocku(x,y,z,5);
-	iscrtaj_kocku(x-1,y,z,5);
-	iscrtaj_kocku(x,y+1,z,5);
-	iscrtaj_kocku(x,y,z-1,5);
-}
-
-void oblik_XR(float x,float y,float z)
-{
-	iscrtaj_kocku(x,y,z,6);
-	iscrtaj_kocku(x-1,y,z,6);
-	iscrtaj_kocku(x,y+1,z,6);
-	iscrtaj_kocku(x,y+1,z-1,6);
-}
-*/

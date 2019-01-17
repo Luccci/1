@@ -10,3 +10,6 @@ Na raspolaganju su 4 rotacije (oko dve ose u oba smera) tasterima 'a','s','d','w
 Igra se pokrece tasterom 'Tab' .
 Igra se zaustavlja tasterom 'Space'.
 Igra se resetuje tasterom 'r' .
+
+prilikom kompilacije dodati -lGL -lGLU -lglut -lm
+standard je c99

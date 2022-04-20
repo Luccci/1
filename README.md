@@ -11,5 +11,7 @@ Igra se pokrece tasterom 'Tab' .
 Igra se zaustavlja tasterom 'Space'.
 Igra se resetuje tasterom 'r' .
 
-prilikom kompilacije dodati -lGL -lGLU -lglut -lm
-standard je c99
+koriscen je gcc kompajler standard c99 
+potrebno je linkovati biblioteke -lGL -lGLU -lglut -lm
+
+PROJEKAT JE RAZVIJEN U OKVIRU PREDMETA RACUNARSKA GRAFIKA - MATEMATICKI FAKULTET - UNIVERZITET U BEOGRADU
